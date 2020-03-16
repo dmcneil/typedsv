@@ -5,15 +5,11 @@
 
 ## Install
 
-npm
-
 ```
+# npm
 npm install typestarsv
-```
 
-yarn
-
-```
+# yarn
 yarn add typestarsv
 ```
 
@@ -68,7 +64,6 @@ parser.parse(createReadStream('./example.csv'))
 Output:
 
 ```
-$ ts-node ./main.ts
 one=Foo two=123 three=foo
 one=Bar two=321 three=bar
 one=Baz two=456 three=baz
@@ -76,43 +71,35 @@ one=Baz two=456 three=baz
 
 ## @Parsed
 
-The `@Parsed` propety level decorator dictates how the `Parser` maps values to a class instance.
+The `@Parsed` property level decorator dictates how the `Parser` maps values to a class instance.
 
 ### By Index
 
 Pass an integer `number` or `{ index: number }` to specify which column to map based on its index:
 
-```
-# csv
-
-"foo","bar","baz"
-```
-
 ```typescript
+// "foo","bar",...
+
 @Parsed(0)
-first: string // -> 'foo'
+first: string // 'foo'
 
 @Parsed({ index: 1 })
-second: string // -> 'bar'
+second: string // 'bar'
 ```
 
 ### By Header
 
 Pass a `string` or `{ header: string }` to specify which column to map based on its header (requires that `{ ..., reader: { header: true }}` is passed to the `Parser#parse` method):
 
-```
-# csv
-
-A,B,C
-"foo","bar","baz"
-```
-
 ```typescript
+// A,B,C
+// "foo","bar","baz
+
 @Parsed('A')
-first: string // -> 'foo'
+first: string // 'foo'
 
 @Parsed({ header: 'B' })
-second: string // -> 'bar'
+second: string // 'bar'
 ```
 
 ```typescript
@@ -126,63 +113,51 @@ While values are first parsed as a `string`, the target property's type is honor
 
 - `number`
 
-  ```
-  # csv
-
-  "123","3.14","ABC",...
-  ```
-
   ```typescript
+  // "123","3.14","ABC",...
+
   @Parsed(0)
-  a: number // OK -> 123
+  a: number // OK: 123
 
   @Parsed(1)
-  b: number // OK -> 3.14
+  b: number // OK: 3.14
 
   @Parsed(2)
-  c: number // ERROR -> 'ABC' cannot be parsed as a number
+  c: number // ERROR: 'ABC' cannot be parsed as a number
   ```
 
 - `boolean`
 
-  ```
-  # csv
-
-  "true","0","Y","F","NONE",...
-  ```
-
   ```typescript
+  // "true","0","Y","F","NONE",...
+
   @Parsed(0)
-  a: boolean // OK -> true
+  a: boolean // OK: true
 
   @Parsed(1)
-  b: boolean // OK -> false
+  b: boolean // OK: false
 
   @Parsed(2)
-  c: boolean // OK -> true
+  c: boolean // OK: true
 
   @Parsed(3)
-  d: boolean // OK -> false
+  d: boolean // OK: false
 
   @Parsed(4)
-  e: boolean // ERROR -> 'NONE' cannot be parsed as a boolean
+  e: boolean // ERROR: 'NONE' cannot be parsed as a boolean
   ```
 
 ### Additional Options
 
-The below options require that the `{ index: number }` or `{ header: string }` argument from the above examples is used.
+The below options require that the `{ index: number | header: string }` argument form detailed above is used.
 
 #### Transform
 
 The `transform` option takes a function of the signature `(input: string) => any` which can be used to modify the input value before it is mapped to the property:
 
-```
-# csv
-
-"foo","B,A,R",...
-```
-
 ```typescript
+// "foo","B,A,R",...
+
 @Parsed({ index: 0, transform: (input: string) => input.toUpperCase() })
 first: string // -> 'FOO'
 
@@ -192,13 +167,9 @@ second: string[] // -> ['B', 'A', 'R']
 
 While the return type is `any`, an error will be thrown if the result type is not the same - or cannot be parsed - as the property type as detailed in [Property Types](#property-types):
 
-```
-# csv
-
-"foo","B,A,R",...
-```
-
 ```typescript
+// "foo","B,A,R",...
+
 @Parsed({ index: 0, transform: (input: string) => `${input.length}` })
 first: number // OK as '3' will be parsed to 3
 
