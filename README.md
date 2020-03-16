@@ -69,6 +69,54 @@ one=Bar two=321 three=bar
 one=Baz two=456 three=baz
 ```
 
+## Parser
+
+The `Parser` expects some type of input where each line is considered a single record with the line being separated by a delimiter to represent a column or field value. Most of the examples in this document make use of the common CSV (comma-separated value) format:
+
+```
+"1","John","Doe"
+"2","Jane","Doe"
+"3","Matt","Smith"
+"4","Jessica","Jones"
+...
+```
+
+While the [RFC4180](https://tools.ietf.org/html/rfc4180) standard is followed, the `Parser` is flexible.
+
+Values may or may not be wrapped in quote characters:
+
+```
+"1","John","Doe"          # OK
+2,Jane,"Doe"              # OK
+```
+
+Values that contain a carriage return (default: `\r`), new line (default: `\n`), or the delimiter (default: `,`) must be wrapped in the quote character:
+
+```
+# OK
+1,John,"Do\re"
+2,Jane,"Do\ne"
+3,Matt,"Smi,th"
+
+# NOT OK
+1,John,Do\re
+2,Jane,Do\ne
+3,Matt,Smi,th
+```
+
+If a quoted value contains the quote character (default: `"`) then it must be escaped by a preceeding quote character:
+
+```
+1,John,"said ""Hi!"""     # OK
+2,Jane,"said "Hi!""       # NOT OK
+```
+
+Non-quoted values can contain the quote character without the escaping:
+
+```
+1,John,said "Hi!"         # OK
+```
+
 ## @Parsed
 
 The `@Parsed` property level decorator dictates how the `Parser` maps values to a class instance.
@@ -89,7 +137,7 @@ second: string // 'bar'
 
 ### By Header
 
-Pass a `string` or `{ header: string }` to specify which column to map based on its header (requires that `{ ..., reader: { header: true }}` is passed to the `Parser#parse` method):
+Pass a `string` or `{ header: string }` to specify which column to map based on its header (requires that `{ ..., reader: { header: true }}` is passed to the `Parser#parse` method and the input header is on the first line):
 
 ```typescript
 // A,B,C
