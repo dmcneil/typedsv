@@ -101,4 +101,41 @@ A,B
       { a: 'C', b: 456, a2: 'C', b2: 456 }
     ])
   })
+
+  describe('property types', () => {
+    it('should accept booleans', async () => {
+      const data = `
+"true","false"
+"TRUE","FALSE"
+"t","f"
+"T","F"
+"1","0"
+"y","n"
+"Y","N"
+"YES","NO"
+`
+
+      class Data {
+        @Parsed(0)
+        a: boolean
+
+        @Parsed(1)
+        b: boolean
+      }
+
+      const parser = new Parser(Data)
+      const got = await parser.parse(data)
+
+      expect(got).toEqual([
+        { a: true, b: false },
+        { a: true, b: false },
+        { a: true, b: false },
+        { a: true, b: false },
+        { a: true, b: false },
+        { a: true, b: false },
+        { a: true, b: false },
+        { a: true, b: false }
+      ])
+    })
+  })
 })

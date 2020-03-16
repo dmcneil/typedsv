@@ -70,18 +70,36 @@ export class Parser<T> {
             dv = num
             ok = true
           }
+        } else if (targetType === Boolean) {
+          if (isTrue(dv)) {
+            dv = true
+            ok = true
+          } else if (isFalse(dv)) {
+            dv = false
+            ok = true
+          }
         }
       }
 
       if (!ok) {
-        throw new EvalError(
+        throw new Error(
           `cannot set value ${dv} of type ${dv.constructor.name} to property ${prop.propertyName} of type ${targetType.name}`
         )
       }
     }
 
     if (!Reflect.set(target, prop.propertyName, dv)) {
-      throw new EvalError(`failed to set property ${prop.propertyName} with value: ${dv}`)
+      throw new Error(`failed to set property ${prop.propertyName} with value: ${dv}`)
     }
   }
+}
+
+const trueBooleanValue = ['TRUE', 'Y', 'YES', 'T', '1']
+const isTrue = (s: string): boolean => {
+  return trueBooleanValue.includes(s.toUpperCase())
+}
+
+const falseBooleanValue = ['FALSE', 'N', 'NO', 'F', '0']
+const isFalse = (s: string): boolean => {
+  return falseBooleanValue.includes(s.toUpperCase())
 }
