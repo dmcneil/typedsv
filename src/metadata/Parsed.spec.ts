@@ -14,6 +14,15 @@ describe('Parsed', () => {
     expect(args[0].options.index).toEqual(1)
   })
 
+  it('should throw an error if an index number is not an integer', () => {
+    expect(() => {
+      class Foo {
+        @Parsed(3.14)
+        a: string
+      }
+    }).toThrowError(new Error("Parsed property 'a' has a non-integer index value: 3.14"))
+  })
+
   it('should accept a string as header', () => {
     class Foo {
       @Parsed('foo')
@@ -67,7 +76,7 @@ describe('Parsed', () => {
 
       expect(() => {
         Parsed({})(Foo, 'a')
-      }).toThrowError(new EvalError("Parsed property 'a' must have either an index or header option"))
+      }).toThrowError(new Error("Parsed property 'a' must have either an index or header option"))
     })
   })
 })
