@@ -1,16 +1,26 @@
-# Type*SV
+<div align="center" style="margin-top: 0.5em">
+	<img src="logo.png" alt="typestarsv">
+  <div><i>Parse and map delimiter-separated values (csv, tsv, ...) to your objects.</i></div>
+</div>
+
 ## Install
+
 npm
+
 ```
 npm install typestarsv
 ```
+
 yarn
+
 ```
 yarn add typestarsv
 ```
 
 ## Basic Usage
+
 Given a delimiter-separated file (`csv`, `tsv`, etc.):
+
 ```
 # example.csv
 
@@ -20,6 +30,7 @@ Given a delimiter-separated file (`csv`, `tsv`, etc.):
 ```
 
 And a class such as:
+
 ```typescript
 // Example.ts
 
@@ -36,7 +47,9 @@ export default class Example {
   three: string
 }
 ```
+
 Create a `Parser` for the type and pass the file to the `parse` method:
+
 ```typescript
 // main.ts
 
@@ -46,14 +59,15 @@ import Example from './Example'
 
 const parser = new Parser(Example)
 
-parser.parse(createReadStream('./example.csv'))
-  .then((examples: Example[]) => {
-    examples.forEach(e => {
-      console.log(`one=${e.one} two=${e.two} three=${e.three}`)   
-    })
+parser.parse(createReadStream('./example.csv')).then((examples: Example[]) => {
+  examples.forEach(e => {
+    console.log(`one=${e.one} two=${e.two} three=${e.three}`)
   })
+})
 ```
+
 Output:
+
 ```
 $ ts-node ./main.ts
 one=Foo two=123 three=foo
