@@ -1,3 +1,4 @@
+import { createReadStream } from 'fs'
 import { Reader } from './Reader'
 
 describe('Reader', () => {
@@ -8,7 +9,7 @@ describe('Reader', () => {
     const lines = await reader.read(data)
 
     expect(lines).toEqual({
-      headers: null,
+      headers: [],
       rows: [['1', 'A', '123', 'B', 'Fo,o']]
     })
   })
@@ -47,7 +48,7 @@ A,B,C,D,E
     const lines = await reader.read(data)
 
     expect(lines).toEqual({
-      headers: null,
+      headers: [],
       rows: [['1', 'A', '123', 'B', 'Fo"o']]
     })
   })
@@ -61,7 +62,7 @@ A,B,C,D,E
     const lines = await reader.read(data)
 
     expect(lines).toEqual({
-      headers: null,
+      headers: [],
       rows: [
         ['1', 'A', '123', 'B', '"'],
         ['1', 'A', '123', 'B', '~']
@@ -75,7 +76,7 @@ A,B,C,D,E
     const lines = await reader.read(data)
 
     expect(lines).toEqual({
-      headers: null,
+      headers: [],
       rows: [['1', 'A', '123', 'B', 'Fo,o']]
     })
   })
@@ -86,7 +87,7 @@ A,B,C,D,E
     const lines = await reader.read(data)
 
     expect(lines).toEqual({
-      headers: null,
+      headers: [],
       rows: [['1', 'A', '123', 'B', 'Fo,o']]
     })
   })
@@ -101,7 +102,7 @@ bar",654,E,Foo
     const lines = await reader.read(data)
 
     expect(lines).toEqual({
-      headers: null,
+      headers: [],
       rows: [
         ['4', 'foo\nbar', '654', 'E', 'Foo'],
         ['5', 'A', '321', 'F\r', 'Foobar']
@@ -122,7 +123,7 @@ bar",654,E,Foo,
     const lines = await reader.read(data)
 
     expect(lines).toEqual({
-      headers: null,
+      headers: [],
       rows: [
         ['1', 'A', '123', 'B', 'Fo,o'],
         ['2', 'B', '321', 'C', 'Foo",bar'],
@@ -139,7 +140,7 @@ bar",654,E,Foo,
     const lines = await reader.read(data)
 
     expect(lines).toEqual({
-      headers: null,
+      headers: [],
       rows: [['1', 'A', '123', '"B"', 'Fo,o']]
     })
   })
@@ -150,7 +151,7 @@ bar",654,E,Foo,
     const lines = await reader.read(data)
 
     expect(lines).toEqual({
-      headers: null,
+      headers: [],
       rows: [['1', 'A', '123', 'B"""B', 'Fo,o']]
     })
   })
@@ -164,11 +165,29 @@ bar",654,E,Foo,
     const lines = await reader.read(data)
 
     expect(lines).toEqual({
-      headers: null,
+      headers: [],
       rows: [
         ['1', 'A', '123', 'B', 'Fo"o'],
         ['2', 'B', '321', 'C', 'Foo"bar']
       ]
+    })
+  })
+
+  describe('inputs', () => {
+    it('should accept a stream', async () => {
+      const stream = createReadStream('./src/parser/fixtures/basic.csv', { highWaterMark: 1000 })
+      const reader = new Reader({ header: true })
+      const lines = await reader.read(stream)
+
+      expect(lines).toEqual({
+        headers: ['ID', 'FirstName', 'LastName'],
+        rows: [
+          { ID: '1', FirstName: 'John', LastName: 'Doe' },
+          { ID: '2', FirstName: 'Jane', LastName: 'Doe' },
+          { ID: '3', FirstName: 'Matt', LastName: 'Smi\nth' },
+          { ID: '4', FirstName: 'Jessica', LastName: 'Jones' }
+        ]
+      })
     })
   })
 

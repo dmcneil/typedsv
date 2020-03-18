@@ -39,7 +39,9 @@ export class Reader {
   private escaped: boolean
   private quoted: boolean
   private lineNumber: number = 0
-  private headers: string[]
+
+  private expectedColumnCount: number = -1
+  private result: ReaderResult
 
   constructor(options?: ReaderOptions) {
     const opts = Object.assign({}, DefaultReaderOptions)
@@ -68,30 +70,52 @@ export class Reader {
     this.escaped = false
     this.quoted = false
     this.lineNumber = 0
-    this.headers = null
+    this.result = { headers: [], rows: [] }
   }
 
   read(input: Input): Promise<ReaderResult> {
-    let p: Promise<ReaderResult>
+    this.reset()
 
     if (input instanceof Readable) {
-      p = this.readReadable(input)
-    } else {
-      if (typeof input === 'string') {
-        input = Buffer.from(input.trim())
-      }
-      p = this.readBuffer(input)
+      return this.readReadable(input)
+    } else if (typeof input === 'string') {
+      input = Buffer.from(input.trim())
     }
 
-    return p.finally(() => this.reset())
+    return this.readBuffer(input)
   }
 
   private readBuffer(input: Buffer): Promise<ReaderResult> {
-    const result: ReaderResult = { headers: this.headers || null, rows: [] }
+    if (input[input.length - 1] !== this.newline) {
+      input = Buffer.concat([input, Buffer.alloc(1, '\n')])
+    }
 
-    let expectedColumns: number = this.headers ? this.headers.length : -1
+    this.readLines(input, this.rowCallback)
+
+    return Promise.resolve(this.result).finally(() => this.reset())
+  }
+
+  private readReadable(input: Readable): Promise<ReaderResult> {
+    let buffer: Buffer = null
+
+    return new Promise<ReaderResult>((resolve, reject) => {
+      input
+        .on('error', err => reject(err))
+        .on('data', async (chunk: Buffer) => {
+          buffer = buffer === null ? chunk : Buffer.concat([buffer, chunk], buffer.length + chunk.length)
+          buffer = this.readLines(buffer, this.rowCallback)
+        })
+        .on('end', () => resolve(this.result))
+    })
+  }
+
+  private readLines(input: Buffer, cb?: (row: string[]) => void): Buffer {
     let row: string[] = []
     let cell: number[] = []
+
+    this.quoted = false
+
+    let read: number = 0
 
     for (let i = 0; i < input.length; i++) {
       const c = input[i]
@@ -102,11 +126,21 @@ export class Reader {
         if (!this.quoted && cell.length === 0) {
           this.quoted = true
           continue
-        } else if (this.quoted && c === this.escape && next === this.quote && !this.escaped) {
+        }
+
+        if (this.quoted && c === this.escape && next === this.quote && !this.escaped) {
           this.escaped = true
           continue
-        } else if (this.quoted && !this.escaped) {
+        }
+
+        if (this.quoted && !this.escaped) {
           this.quoted = false
+
+          // Properly quoted but empty is OK.
+          if (cell.length === 0) {
+            row.push('')
+          }
+
           if (!eof) {
             continue
           }
@@ -118,108 +152,68 @@ export class Reader {
         continue
       }
 
-      const eol = !this.quoted && ((c === this.cr && next === this.newline) || c === this.newline)
+      if (!this.quoted) {
+        const eol = (c === this.cr && next === this.newline) || c === this.newline
 
-      if ((c === this.delimiter && !this.quoted) || eol || eof) {
-        // Make sure we get the last non-quote, non-delimiter character.
-        if (eof && c !== this.quote && c !== this.delimiter) {
-          cell.push(c)
-        }
-
-        // Skip trailing delimiters or, if strict, throw an error.
-        if (c === this.delimiter && !this.quoted && (eol || next === this.newline)) {
-          if (this.strict) {
+        if (c === this.delimiter) {
+          if (this.strict && (next === this.cr || next === this.newline)) {
             throw new Error(`Trailing delimiter found at the end of line ${this.lineNumber + 1}`)
           }
+
+          row.push(String.fromCharCode(...cell))
+          cell = []
           continue
         }
 
-        row.push(String.fromCharCode(...cell))
-        cell = []
-
-        if (eol || eof) {
+        if (eol) {
           this.lineNumber++
-          if (this.header) {
-            if (this.lineNumber === 1 && !this.headers) {
-              this.headers = row
-              expectedColumns = this.headers.length
-              result.headers = this.headers
-            } else {
-              if (this.strict && expectedColumns >= 0 && row.length !== expectedColumns) {
-                throw new Error(
-                  `Line ${this.lineNumber} has ${row.length} columns but ${expectedColumns} were expected`
-                )
-              }
 
-              const rows = result.rows as object[]
-              const o = {}
-              this.headers?.forEach((header: string, index: number) => {
-                o[header] = row[index]
-              })
-              rows.push(o)
-            }
-          } else {
-            result.rows.push(row)
+          if (cell.length > 0) {
+            row.push(String.fromCharCode(...cell))
+            cell = []
           }
 
+          if (cb) {
+            cb(row)
+          }
           row = []
 
-          if (c === this.cr && next === this.newline) {
-            i++
-          }
+          read = read + ((c === this.cr ? i + 2 : i + 1) - read)
+
+          continue
         }
-      } else {
-        cell.push(c)
       }
+
+      cell.push(c)
 
       this.escaped = false
     }
 
-    return Promise.resolve(result)
+    return input.slice(read, input.length)
   }
 
-  private readReadable(input: Readable): Promise<ReaderResult> {
-    const result: ReaderResult = { headers: null, rows: [] }
+  private rowCallback = (row: string[]): void => {
+    if (this.header) {
+      if (this.lineNumber === 1) {
+        this.result.headers = row
+        this.expectedColumnCount = this.result.headers.length
+      } else {
+        if (this.strict && row.length !== this.expectedColumnCount) {
+          throw new Error(
+            `Line ${this.lineNumber} has ${row.length} columns but ${this.expectedColumnCount} were expected`
+          )
+        }
 
-    let next: Buffer = null
-
-    return new Promise<ReaderResult>((resolve, reject) => {
-      input
-        .on('error', err => reject(err))
-        .on('data', async (chunk: any) => {
-          let b: Buffer = next !== null ? Buffer.concat([next, chunk]) : chunk
-
-          const lastNewline = b.lastIndexOf(this.newline)
-          const lastCR = b.lastIndexOf(this.cr)
-
-          if (lastNewline >= 0) {
-            if (lastCR >= 0 && lastCR === lastNewline - 1) {
-              next = b.slice(lastCR + 2, b.length)
-              b = b.slice(0, lastCR)
-            } else {
-              // TODO(dmcneil) possible issue here with \n in quoted fields
-              next = b.slice(lastNewline + 1, b.length)
-              b = b.slice(0, lastNewline)
-            }
-          } else {
-            // If the stream buffer is set really low to where a chunk doesn't
-            // contain at least a full line then just keep building the local
-            // buffer until a new line is found.
-            next = b
-            return
-          }
-
-          const r = await this.readBuffer(b)
-          if (r.headers && !result.headers) {
-            result.headers = r.headers
-          }
-          if (result.rows.length === 0) {
-            result.rows = r.rows
-          } else {
-            result.rows = [...result.rows, ...r.rows]
-          }
+        const rows = this.result.rows as object[]
+        const objectRow = {}
+        this.result.headers.forEach((header: string, index: number) => {
+          objectRow[header] = row[index]
         })
-        .on('end', () => resolve(result))
-    })
+        rows.push(objectRow)
+      }
+    } else {
+      this.result.rows.push(row)
+    }
   }
+
 }

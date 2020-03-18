@@ -83,11 +83,9 @@ The `Parser` expects some type of input where each line is considered a single r
 ...
 ```
 
-#### Data Format
-
 While TypeDSV implements [RFC4180](https://tools.ietf.org/html/rfc4180) , the `Parser` accepts a variety of options to accomodate data that may not follow that of a typical CSV.
 
-##### Header
+#### Headers
 
 If the first line of the input declares the value/field names then use the `{ header: true }` option.
 
@@ -102,7 +100,7 @@ If the first line of the input declares the value/field names then use the `{ he
 
 This option also enables the ability to map properties by the headers instead of by index
 
-##### Delimiter
+#### Delimiter
 
 The default delimiter/separator is `,` (comma):
 
@@ -117,7 +115,7 @@ const input = '"1"|"John"|"Doe"'
 ... = new Parser(input, { reader: { delimiter: '|' } })
 ```
 
-##### Quotes
+#### Quotes
 
 The default quote character is `"` (double quote):
 
