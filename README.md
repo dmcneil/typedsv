@@ -1,19 +1,19 @@
 <div align="center" style="margin-top: 0.5em">
-	<img src="logo.png" alt="typestarsv">
-  <div><i>Parse and map delimiter-separated values (csv, tsv, ...<strong>*</strong>sv) to your objects.</i></div>
+	<img src="logo.png" alt="typedsv">
+  <div><i>Parse and map delimiter-separated values to your objects!</i></div>
 </div>
 
 ## Install
 
 ```
 # npm
-npm install typestarsv
+npm install typedsv
 
 # yarn
-yarn add typestarsv
+yarn add typedsv
 ```
 
-## Basic Usage
+## Getting Started
 
 Given a delimiter-separated file (`csv`, `tsv`, etc.):
 
@@ -30,7 +30,7 @@ And a class such as:
 ```typescript
 // Example.ts
 
-import { Parsed } from 'typestarsv'
+import { Parsed } from 'typedsv'
 
 export default class Example {
   @Parsed(0)
@@ -50,7 +50,7 @@ Create a `Parser` for the type and pass the file to the `parse` method:
 // main.ts
 
 import { createReadStream } from 'fs'
-import { Parser } from 'typestarsv'
+import { Parser } from 'typedsv'
 import Example from './Example'
 
 const parser = new Parser(Example)
@@ -69,7 +69,9 @@ one=Bar two=321 three=bar
 one=Baz two=456 three=baz
 ```
 
-## Parser
+## Usage
+
+### Parser
 
 The `Parser` expects some type of input where each line is considered a single record with the line being separated by a delimiter to represent a column or field value. Most of the examples in this document make use of the common CSV (comma-separated value) format:
 
@@ -81,13 +83,48 @@ The `Parser` expects some type of input where each line is considered a single r
 ...
 ```
 
-While the [RFC4180](https://tools.ietf.org/html/rfc4180) standard is followed, the `Parser` is flexible.
+#### Data Format
 
-Values may or may not be wrapped in quote characters:
+While TypeDSV implements [RFC4180](https://tools.ietf.org/html/rfc4180) , the `Parser` accepts a variety of options to accomodate data that may not follow that of a typical CSV.
+
+##### Delimiter
+
+The default delimiter/separator is `,` (comma):
+
+```
+"1","John","Doe"
+```
+
+This can be changed using the `{ delimiter: string }` option:
+
+```typescript
+const input = '"1"|"John"|"Doe"'
+... = new Parser(input, { reader: { delimiter: '|' } })
+```
+
+##### Quotes
+
+The default quote character is `"` (double quote):
+
+```
+"1","John","Doe"
+```
+
+This can be changed using the `{ quote: string }` option:
+
+```typescript
+const input = '~1~,~John~,~Doe~'
+... = new Parser(input, { reader: { quote: '~' } })
+```
+
+###### Rules
+
+Values do not have to be wrapped in quote characters although there are some exceptions as listed below:
 
 ```
 "1","John","Doe"          # OK
-2,Jane,"Doe"              # OK
+2,Jane,Doe                # OK
+3,"Matt",Smith            # OK
 ```
 
 Values that contain a carriage return (default: `\r`), new line (default: `\n`), or the delimiter (default: `,`) must be wrapped in the quote character:
@@ -117,11 +154,11 @@ Non-quoted values can contain the quote character without the escaping:
 1,John,said "Hi!"         # OK
 ```
 
-## @Parsed
+### @Parsed
 
-The `@Parsed` property level decorator dictates how the `Parser` maps values to a class instance.
+The `@Parsed` decorator dictates how the `Parser` should maps values to properties within a class.
 
-### By Index
+#### By Index
 
 Pass an integer `number` or `{ index: number }` to specify which column to map based on its index:
 
@@ -135,7 +172,7 @@ first: string // 'foo'
 second: string // 'bar'
 ```
 
-### By Header
+#### By Header
 
 Pass a `string` or `{ header: string }` to specify which column to map based on its header (requires that `{ ..., reader: { header: true }}` is passed to the `Parser#parse` method and the input header is on the first line):
 
@@ -155,7 +192,7 @@ const parser = new Parser(...)
 parser.parse(..., { reader: { header: true }}
 ```
 
-### Property Types
+#### Property Types
 
 While values are first parsed as a `string`, the target property's type is honored so long as the conversion is straightforward. To map something beyond a few primitives, see the [Transform](#transform) option:
 
@@ -195,11 +232,11 @@ While values are first parsed as a `string`, the target property's type is honor
   e: boolean // ERROR: 'NONE' cannot be parsed as a boolean
   ```
 
-### Additional Options
+#### Additional Options
 
 The below options require that the `{ index: number | header: string }` argument form detailed above is used.
 
-#### Transform
+##### Transform
 
 The `transform` option takes a function of the signature `(input: string) => any` which can be used to modify the input value before it is mapped to the property:
 

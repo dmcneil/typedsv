@@ -1,9 +1,9 @@
 {
-  "name": "typestarsv",
+  "name": "typedsv",
   "version": "0.1.0",
   "license": "MIT",
   "repository": {
-    "url": "https://github.com/dmcneil/typestarsv"
+    "url": "https://github.com/dmcneil/typedsv"
   },
   "main": "./build/index.js",
   "types": "./build/index.d.ts",
