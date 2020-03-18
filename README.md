@@ -87,6 +87,21 @@ The `Parser` expects some type of input where each line is considered a single r
 
 While TypeDSV implements [RFC4180](https://tools.ietf.org/html/rfc4180) , the `Parser` accepts a variety of options to accomodate data that may not follow that of a typical CSV.
 
+##### Header
+
+If the first line of the input declares the value/field names then use the `{ header: true }` option.
+
+```
+"ID","FirstName","LastName"
+"1","John","Doe"
+```
+
+```typescript
+... = new Parser(input, { reader: { header: true } })
+```
+
+This option also enables the ability to map properties by the headers instead of by index
+
 ##### Delimiter
 
 The default delimiter/separator is `,` (comma):
@@ -116,8 +131,6 @@ This can be changed using the `{ quote: string }` option:
 const input = '~1~,~John~,~Doe~'
 ... = new Parser(input, { reader: { quote: '~' } })
 ```
-
-###### Rules
 
 Values do not have to be wrapped in quote characters although there are some exceptions as listed below:
 
