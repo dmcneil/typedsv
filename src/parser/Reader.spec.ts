@@ -2,6 +2,25 @@ import { createReadStream } from 'fs'
 import { Reader } from './Reader'
 
 describe('Reader', () => {
+  it('should skip comment lines', async () => {
+    const data = `
+# comment
+1,A,123,"B","Foo" # inline comment
+# another comment
+2,B,321,"C","Bar"
+`
+    const reader = new Reader()
+    const lines = await reader.read(data)
+
+    expect(lines).toEqual({
+      headers: [],
+      rows: [
+        ['1', 'A', '123', 'B', 'Foo'],
+        ['2', 'B', '321', 'C', 'Bar']
+      ]
+    })
+  })
+
   it('should allow delimiters in quoted fields', async () => {
     const data = `1,A,123,"B","Fo,o"`
 

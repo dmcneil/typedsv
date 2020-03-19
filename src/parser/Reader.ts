@@ -9,6 +9,7 @@ export interface ReaderOptions {
   delimiter?: string
   newline?: string
   carriageReturn?: string
+  comment?: string
 }
 
 const DefaultReaderOptions: ReaderOptions = Object.freeze({
@@ -18,7 +19,8 @@ const DefaultReaderOptions: ReaderOptions = Object.freeze({
   escape: '"',
   delimiter: ',',
   newline: '\n',
-  carriageReturn: '\r'
+  carriageReturn: '\r',
+  comment: '#'
 })
 
 export interface ReaderResult {
@@ -35,9 +37,11 @@ export class Reader {
   private readonly delimiter: number
   private readonly newline: number
   private readonly cr: number
+  private readonly comment: number
 
   private escaped: boolean
   private quoted: boolean
+  private commented: boolean
   private lineNumber: number = 0
 
   private expectedColumnCount: number = -1
@@ -64,11 +68,13 @@ export class Reader {
     this.delimiter = opts.delimiter.charCodeAt(0)
     this.newline = opts.newline.charCodeAt(0)
     this.cr = opts.carriageReturn.charCodeAt(0)
+    this.comment = opts.comment.charCodeAt(0)
   }
 
   reset() {
     this.escaped = false
     this.quoted = false
+    this.commented = false
     this.lineNumber = 0
     this.result = { headers: [], rows: [] }
   }
@@ -113,7 +119,9 @@ export class Reader {
     let row: string[] = []
     let cell: number[] = []
 
+    this.escaped = false
     this.quoted = false
+    this.commented = false
 
     let read: number = 0
 
@@ -121,6 +129,20 @@ export class Reader {
       const c = input[i]
       const next = i < input.length - 1 ? input[i + 1] : null
       const eof = next === null
+      const eol = (c === this.cr && next === this.newline) || c === this.newline
+
+      if (c === this.comment && !this.commented && !this.quoted) {
+        this.commented = true
+        continue
+      }
+
+      if (this.commented) {
+        if (eol) {
+          this.commented = false
+        } else {
+          continue
+        }
+      }
 
       if (c === this.quote) {
         if (!this.quoted && cell.length === 0) {
@@ -147,14 +169,16 @@ export class Reader {
         }
       }
 
+      if (c === ' '.charCodeAt(0) && !this.quoted && (input[i - 1] === this.quote || next === this.quote)) {
+        continue
+      }
+
       if (c === this.escape && this.quoted && next === this.quote && !this.escaped) {
         this.escaped = true
         continue
       }
 
       if (!this.quoted) {
-        const eol = (c === this.cr && next === this.newline) || c === this.newline
-
         if (c === this.delimiter) {
           if (this.strict && (next === this.cr || next === this.newline)) {
             throw new Error(`Trailing delimiter found at the end of line ${this.lineNumber + 1}`)
@@ -166,6 +190,10 @@ export class Reader {
         }
 
         if (eol) {
+          if (row.length === 0) {
+            continue
+          }
+
           this.lineNumber++
 
           if (cell.length > 0) {
