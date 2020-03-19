@@ -3,7 +3,23 @@
   <div><i>Parse and map delimiter-separated values to your objects!</i></div>
 </div>
 
-## Install
+## Table of Contents
+
+- [Installation](#installation)
+- [Getting Started](#getting-started)
+- [Usage](#usage)
+  - [Parser](#parser)
+    - [Headers](#headers)
+    - [Delimiter](#delimiter)
+    - [Quotes](#quotes)
+  - [@Parsed](#parsed)
+    - [By Index](#by-index)
+    - [By Header](#by-header)
+    - [Property Types](#property-types)
+    - [Additional Options](#additional-options)
+      - [Transform](#transform)
+
+## Installation
 
 ```
 # npm
