@@ -4,9 +4,7 @@ import { getMetadataStore } from '../metadata/Store'
 import { Input } from './Input'
 import { Reader, ReaderOptions } from './Reader'
 
-export interface ParserOptions {
-  reader?: ReaderOptions
-}
+type ParserOptions = {} | ReaderOptions
 
 export class Parser<T> {
   private readonly type: ConstructableType<T>
@@ -19,7 +17,7 @@ export class Parser<T> {
 
   parse(input: Input, options?: ParserOptions): Promise<T[]> {
     const objects: T[] = []
-    const reader = new Reader(options?.reader)
+    const reader = new Reader(options)
 
     return new Promise<T[]>(async (resolve, _) => {
       const result = await reader.read(input)

@@ -95,7 +95,7 @@ If the first line of the input declares the value/field names then use the `{ he
 ```
 
 ```typescript
-... = new Parser(input, { reader: { header: true } })
+... = new Parser(input, { header: true })
 ```
 
 This option also enables the ability to map properties by the headers instead of by index
@@ -112,7 +112,7 @@ This can be changed using the `{ delimiter: string }` option:
 
 ```typescript
 const input = '"1"|"John"|"Doe"'
-... = new Parser(input, { reader: { delimiter: '|' } })
+... = new Parser(input, { delimiter: '|' })
 ```
 
 #### Quotes
@@ -127,7 +127,7 @@ This can be changed using the `{ quote: string }` option:
 
 ```typescript
 const input = '~1~,~John~,~Doe~'
-... = new Parser(input, { reader: { quote: '~' } })
+... = new Parser(input, { quote: '~' })
 ```
 
 Values do not have to be wrapped in quote characters although there are some exceptions as listed below:
@@ -185,7 +185,7 @@ second: string // 'bar'
 
 #### By Header
 
-Pass a `string` or `{ header: string }` to specify which column to map based on its header (requires that `{ ..., reader: { header: true }}` is passed to the `Parser#parse` method and the input header is on the first line):
+Pass a `string` or `{ header: string }` to specify which column to map based on its header (requires that `{ header: true }` is set on the `Parser` and the header is on the first line of the input):
 
 ```typescript
 // A,B,C
@@ -200,7 +200,7 @@ second: string // 'bar'
 
 ```typescript
 const parser = new Parser(...)
-parser.parse(..., { reader: { header: true }}
+parser.parse(..., { header: true }
 ```
 
 #### Property Types
