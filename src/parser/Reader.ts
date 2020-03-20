@@ -47,6 +47,8 @@ export class Reader {
   private expectedColumnCount: number = -1
   private result: ReaderResult
 
+  private readonly space: number = ' '.charCodeAt(0)
+
   constructor(options?: ReaderOptions) {
     const opts = Object.assign({}, DefaultReaderOptions)
     if (options) {
@@ -127,8 +129,8 @@ export class Reader {
 
     for (let i = 0; i < input.length; i++) {
       const c = input[i]
+      const prev = i > 0 ? input[i - 1] : null
       const next = i < input.length - 1 ? input[i + 1] : null
-      const eof = next === null
       const eol = (c === this.cr && next === this.newline) || c === this.newline
 
       if (c === this.comment && !this.commented && !this.quoted) {
@@ -150,6 +152,8 @@ export class Reader {
           continue
         }
 
+        // Escape the next iteration if currently quoted and the escape character is the same
+        // as the quote character.
         if (this.quoted && c === this.escape && next === this.quote && !this.escaped) {
           this.escaped = true
           continue
@@ -163,13 +167,11 @@ export class Reader {
             row.push('')
           }
 
-          if (!eof) {
-            continue
-          }
+          continue
         }
       }
 
-      if (c === ' '.charCodeAt(0) && !this.quoted && (input[i - 1] === this.quote || next === this.quote)) {
+      if (c === this.space && !this.quoted && (prev === this.quote || next === this.quote)) {
         continue
       }
 
