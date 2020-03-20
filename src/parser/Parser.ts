@@ -4,7 +4,7 @@ import { getMetadataStore } from '../metadata/Store'
 import { Input } from './Input'
 import { Reader, ReaderOptions } from './Reader'
 
-type ParserOptions = {} | ReaderOptions
+type ParserOptions = {} & ReaderOptions
 
 export class Parser<T> {
   private readonly type: ConstructableType<T>
