@@ -1,6 +1,6 @@
 /* tslint:disable:max-classes-per-file */
 import 'reflect-metadata'
-import Parsed from '../decorators/Parsed'
+import Parsed from '../metadata/Parsed'
 import { Parser } from './Parser'
 
 describe('Parser', () => {
@@ -136,6 +136,97 @@ A,B
         { a: true, b: false },
         { a: true, b: false }
       ])
+    })
+  })
+
+  describe('validate', () => {
+    it('should accept just a function', async () => {
+      const data = `foo`
+
+      class Data {
+        @Parsed({
+          index: 0,
+          validate: input => input.startsWith('F')
+        })
+        a: string
+      }
+
+      const parser = new Parser(Data)
+      await expect(parser.parse(data))
+        .rejects
+        .toThrowError(new Error('Cannot set value \'foo\' to property \'a\': invalid (validate.0)'))
+    })
+
+    it('should throw the first error if an array of functions', async () => {
+      const data = `foo`
+
+      class Data {
+        @Parsed({
+          index: 0,
+          validate: [
+            input => input.length === 3,
+            input => input.startsWith('F'),
+            { message: 'length must be 1', f: input => input.length === 1 }
+          ]
+        })
+        a: string
+      }
+
+      const parser = new Parser(Data)
+      await expect(parser.parse(data))
+        .rejects
+        .toThrowError(new Error('Cannot set value \'foo\' to property \'a\': invalid (validate.1)'))
+    })
+
+    describe('aggregate', () => {
+      it('should combine errors when true', async () => {
+        const data = `foo`
+
+        class Data {
+          @Parsed({
+            index: 0,
+            validate: {
+              aggregate: true,
+              functions: [
+                input => input.length === 3,
+                input => input.startsWith('F'),
+                { message: 'length must be 1', f: input => input.length === 1 }
+              ]
+            }
+          })
+          a: string
+        }
+
+        const parser = new Parser(Data)
+        await expect(parser.parse(data))
+          .rejects
+          .toThrowError(new Error('Cannot set value \'foo\' to property \'a\': invalid (validate.1), ' +
+            'Cannot set value \'foo\' to property \'a\': length must be 1 (validate.2)'))
+      })
+
+      it('should throw the first error when false', async () => {
+        const data = `foo`
+
+        class Data {
+          @Parsed({
+            index: 0,
+            validate: {
+              aggregate: false,
+              functions: [
+                input => input.length === 3,
+                input => input.startsWith('F'),
+                { message: 'length must be 1', f: input => input.length === 1 }
+              ]
+            }
+          })
+          a: string
+        }
+
+        const parser = new Parser(Data)
+        await expect(parser.parse(data))
+          .rejects
+          .toThrowError(new Error('Cannot set value \'foo\' to property \'a\': invalid (validate.1)'))
+      })
     })
   })
 })

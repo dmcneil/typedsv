@@ -1,6 +1,7 @@
 import { getStore } from './Store'
+import { ValidateOptions, Validator } from './Validate'
 
-type Transformer = (input: string) => any
+export type Transformer = (input: string) => any
 
 export interface ParsedArgs {
   readonly propertyName: string
@@ -11,6 +12,7 @@ export interface ParsedOptions {
   index?: number
   header?: string
   transform?: Transformer
+  validate?: Validator | Validator[] | ValidateOptions
 }
 
 export default function Parsed(options: ParsedOptions | number | string) {

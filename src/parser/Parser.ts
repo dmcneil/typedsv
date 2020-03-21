@@ -1,6 +1,13 @@
 import { ConstructableType } from '../common/ConstructableType'
-import { ParsedArgs } from '../decorators/Parsed'
-import { getStore } from '../decorators/Store'
+import { ParsedArgs } from '../metadata/Parsed'
+import { getStore } from '../metadata/Store'
+import {
+  isValidator,
+  isValidatorObject,
+  ValidateOptions,
+  Validator,
+  ValidatorFunction
+} from '../metadata/Validate'
 import { Input } from './Input'
 import { Reader, ReaderOptions } from './Reader'
 
@@ -18,11 +25,11 @@ export class Parser<T> {
     this.parsedArgs = getStore().getParsed(this.type)
   }
 
-  parse(input: Input, options?: ParserOptions): Promise<T[]> {
+  parse = (input: Input, options?: ParserOptions): Promise<T[]> => {
     const objects: T[] = []
     const reader = new Reader(options)
 
-    return new Promise<T[]>(async (resolve, _) => {
+    return new Promise<T[]>(async (resolve, reject) => {
       const result = await reader.read(input)
 
       result.rows.forEach((row: string[] | object) => {
@@ -32,13 +39,21 @@ export class Parser<T> {
           row.forEach((value: any, index: number) => {
             this.parsedArgs
               .filter(args => args.options.index === index)
-              .forEach((prop: ParsedArgs) => Parser.setParsedProperty(target, prop, row[index]))
+              .forEach((prop: ParsedArgs) => {
+                try {
+                  Parser.setParsedProperty(target, prop, row[index])
+                } catch (e) {
+                  reject(e)
+                }
+              })
           })
         } else if (typeof row === 'object') {
           result.headers.forEach((value: string, index: number) => {
             this.parsedArgs
               .filter(args => args.options.header === value || args.options.index === index)
-              .forEach((prop: ParsedArgs) => Parser.setParsedProperty(target, prop, row[value]))
+              .forEach((prop: ParsedArgs) => {
+                Parser.setParsedProperty(target, prop, row[value])
+              })
           })
         }
 
@@ -51,8 +66,50 @@ export class Parser<T> {
 
   private static setParsedProperty(target: any, prop: ParsedArgs, dv: any): void {
     const { transform } = prop.options
+    let { validate } = prop.options
     if (transform && typeof dv === 'string') {
       dv = transform(dv as string)
+    }
+
+    if (validate) {
+      if (validate instanceof Array) {
+        validate = { functions: validate }
+      } else if (isValidator(validate)) {
+        validate = { functions: [validate] }
+      }
+      validate = validate as ValidateOptions
+
+      const { aggregate, functions } = validate
+      const errors: Error[] = []
+
+      functions.forEach((v: Validator, index: number) => {
+        let f: ValidatorFunction
+        let message: string
+
+        if (isValidatorObject(v)) {
+          f = v.f
+          message = v.message
+        } else {
+          f = v
+        }
+
+        const result = f(dv)
+        if (!result) {
+          if (!message) {
+            message = 'invalid'
+          }
+          const error = new Error(`Cannot set value '${dv}' to property '${prop.propertyName}': ${message} (validate.${index})`)
+          if (aggregate) {
+            errors.push(error)
+          } else {
+            throw error
+          }
+        }
+      })
+
+      if (errors.length > 0) {
+        throw new Error(errors.map(e => e.message).join(', '))
+      }
     }
 
     const targetType = Reflect.getMetadata('design:type', target, prop.propertyName)
