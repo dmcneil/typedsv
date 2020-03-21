@@ -1,6 +1,6 @@
 /* tslint:disable:max-classes-per-file */
 import Parsed from './Parsed'
-import { getMetadataStore } from './Store'
+import { getStore } from './Store'
 
 describe('Parsed', () => {
   it('should accept a number as index', () => {
@@ -9,7 +9,7 @@ describe('Parsed', () => {
       a: string
     }
 
-    const args = getMetadataStore().getParsed(Foo)
+    const args = getStore().getParsed(Foo)
     expect(args).toHaveLength(1)
     expect(args[0].options.index).toEqual(1)
   })
@@ -20,7 +20,7 @@ describe('Parsed', () => {
         @Parsed(3.14)
         a: string
       }
-    }).toThrowError(new Error("Parsed property 'a' has a non-integer index value: 3.14"))
+    }).toThrowError(new Error("@Parsed property 'a' has a non-integer index value: 3.14"))
   })
 
   it('should accept a string as header', () => {
@@ -29,7 +29,7 @@ describe('Parsed', () => {
       a: string
     }
 
-    const args = getMetadataStore().getParsed(Foo)
+    const args = getStore().getParsed(Foo)
     expect(args).toHaveLength(1)
     expect(args[0].options.header).toEqual('foo')
   })
@@ -41,7 +41,7 @@ describe('Parsed', () => {
         a: string
       }
 
-      const args = getMetadataStore().getParsed(Foo)
+      const args = getStore().getParsed(Foo)
       expect(args).toHaveLength(1)
       expect(args[0].options.index).toEqual(1)
     })
@@ -52,7 +52,7 @@ describe('Parsed', () => {
         a: string
       }
 
-      const args = getMetadataStore().getParsed(Foo)
+      const args = getStore().getParsed(Foo)
       expect(args).toHaveLength(1)
       expect(args[0].options.header).toEqual('foo')
     })
@@ -63,7 +63,7 @@ describe('Parsed', () => {
         a: string
       }
 
-      const args = getMetadataStore().getParsed(Foo)
+      const args = getStore().getParsed(Foo)
       expect(args).toHaveLength(1)
       expect(args[0].options.index).toEqual(1)
       expect(args[0].options.header).toEqual('foo')
@@ -76,7 +76,7 @@ describe('Parsed', () => {
 
       expect(() => {
         Parsed({})(Foo, 'a')
-      }).toThrowError(new Error("Parsed property 'a' must have either an index or header option"))
+      }).toThrowError(new Error("@Parsed property 'a' must have either an index or header option"))
     })
   })
 })

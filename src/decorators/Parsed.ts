@@ -1,8 +1,8 @@
-import { getMetadataStore } from './Store'
+import { getStore } from './Store'
 
 type Transformer = (input: string) => any
 
-export interface ParsedMetadataArgs {
+export interface ParsedArgs {
   readonly propertyName: string
   readonly options: ParsedOptions
 }
@@ -17,7 +17,7 @@ export default function Parsed(options: ParsedOptions | number | string) {
   return (object: Object, propertyName: string) => {
     if (typeof options === 'number') {
       if (options % 1 !== 0) {
-        throw new Error(`Parsed property '${propertyName}' has a non-integer index value: ${options}`)
+        throw new Error(`@Parsed property '${propertyName}' has a non-integer index value: ${options}`)
       }
       options = { index: options }
     } else if (typeof options === 'string') {
@@ -25,9 +25,9 @@ export default function Parsed(options: ParsedOptions | number | string) {
     }
 
     if (typeof options.index === 'undefined' && typeof options.header === 'undefined') {
-      throw new Error(`Parsed property '${propertyName}' must have either an index or header option`)
+      throw new Error(`@Parsed property '${propertyName}' must have either an index or header option`)
     }
 
-    getMetadataStore().putParsed(object.constructor, { propertyName, options })
+    getStore().putParsed(object.constructor, { propertyName, options })
   }
 }

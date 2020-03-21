@@ -245,5 +245,4 @@ export class Reader {
       this.result.rows.push(row)
     }
   }
-
 }

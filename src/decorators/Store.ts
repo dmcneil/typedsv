@@ -1,18 +1,18 @@
 import { ConstructableType } from '../common/ConstructableType'
-import { ParsedMetadataArgs } from './Parsed'
+import { ParsedArgs } from './Parsed'
 
 class Store {
-  private readonly parsed: Map<Function, ParsedMetadataArgs[]> = new Map()
+  private readonly parsed: Map<Function, ParsedArgs[]> = new Map()
 
   getParsed<T>(type: ConstructableType<T>) {
     const md = this.parsed.get(type)
     if (!md) {
-      throw new Error(`Metadata for ${type.name} not found. Does it contain any properties decorated with @Parsed?`)
+      throw new Error(`${type.name} type cannot be parsed. Does it contain any properties decorated with @Parsed?`)
     }
     return md
   }
 
-  putParsed(target: Function, arg: ParsedMetadataArgs) {
+  putParsed(target: Function, arg: ParsedArgs) {
     const o = this.parsed.get(target)
     if (!o) {
       this.parsed.set(target, [arg])
@@ -22,7 +22,7 @@ class Store {
   }
 }
 
-export function getMetadataStore(): Store {
+export function getStore(): Store {
   const g: any = global
 
   if (!g.store) {
