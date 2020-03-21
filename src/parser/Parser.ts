@@ -1,18 +1,20 @@
 import { ConstructableType } from '../common/ConstructableType'
-import { ParsedArgs } from '../metadata/Parsed'
+import { ParsedProperty } from '../metadata/Parsed'
 import { getStore } from '../metadata/Store'
 import { isValidationObject, ValidationFunction, ValidationOptions, ValidationType } from '../metadata/Validation'
 import { Input } from './Input'
 import { Reader, ReaderOptions } from './Reader'
 
-const trueBooleanValue = ['TRUE', 'Y', 'YES', 'T', '1']
-const falseBooleanValue = ['FALSE', 'N', 'NO', 'F', '0']
+const booleanValues = Object.freeze({
+  true: ['TRUE', 'Y', 'YES', 'T', '1'],
+  false: ['FALSE', 'N', 'NO', 'F', '0']
+})
 
 type ParserOptions = {} & ReaderOptions
 
 export class Parser<T> {
   private readonly type: ConstructableType<T>
-  private readonly parsedArgs: ParsedArgs[]
+  private readonly parsedArgs: ParsedProperty[]
 
   constructor(type: ConstructableType<T>) {
     this.type = type
@@ -33,7 +35,7 @@ export class Parser<T> {
           row.forEach((value: any, index: number) => {
             this.parsedArgs
               .filter(args => args.options.index === index)
-              .forEach((prop: ParsedArgs) => {
+              .forEach((prop: ParsedProperty) => {
                 try {
                   Parser.setParsedProperty(target, prop, row[index])
                 } catch (e) {
@@ -45,7 +47,7 @@ export class Parser<T> {
           result.headers.forEach((value: string, index: number) => {
             this.parsedArgs
               .filter(args => args.options.header === value || args.options.index === index)
-              .forEach((prop: ParsedArgs) => {
+              .forEach((prop: ParsedProperty) => {
                 try {
                   Parser.setParsedProperty(target, prop, row[value])
                 } catch (e) {
@@ -62,7 +64,7 @@ export class Parser<T> {
     })
   }
 
-  private static setParsedProperty(target: any, prop: ParsedArgs, dv: any): void {
+  private static setParsedProperty(target: any, prop: ParsedProperty, dv: any): void {
     const { transform, validate } = prop.options
     if (transform && typeof dv === 'string') {
       dv = transform(dv as string)
@@ -72,7 +74,7 @@ export class Parser<T> {
       this.validateProperty(prop, dv, validate as ValidationOptions)
     }
 
-    const targetType = Reflect.getMetadata('design:type', target, prop.propertyName)
+    const targetType = Reflect.getMetadata('design:type', target, prop.name)
 
     if (!(dv instanceof targetType || dv.constructor === targetType)) {
       let ok = false
@@ -85,10 +87,10 @@ export class Parser<T> {
             ok = true
           }
         } else if (targetType === Boolean) {
-          if (trueBooleanValue.includes(dv.toUpperCase())) {
+          if (booleanValues.true.includes(dv.toUpperCase())) {
             dv = true
             ok = true
-          } else if (falseBooleanValue.includes(dv.toUpperCase())) {
+          } else if (booleanValues.false.includes(dv.toUpperCase())) {
             dv = false
             ok = true
           }
@@ -97,17 +99,17 @@ export class Parser<T> {
 
       if (!ok) {
         throw new Error(
-          `Cannot set value '${dv}' of type ${dv.constructor.name} to property '${prop.propertyName}' of type ${targetType.name}`
+          `Cannot set value '${dv}' of type ${dv.constructor.name} to property '${prop.name}' of type ${targetType.name}`
         )
       }
     }
 
-    if (!Reflect.set(target, prop.propertyName, dv)) {
-      throw new Error(`Failed to set property '${prop.propertyName}' to value '${dv}'`)
+    if (!Reflect.set(target, prop.name, dv)) {
+      throw new Error(`Failed to set property '${prop.name}' to value '${dv}'`)
     }
   }
 
-  private static validateProperty(prop: ParsedArgs, value: any, options: ValidationOptions): void {
+  private static validateProperty(prop: ParsedProperty, value: any, options: ValidationOptions): void {
     const { aggregate, functions } = options
     const errors: Error[] = []
 
@@ -128,7 +130,7 @@ export class Parser<T> {
           message = 'invalid'
         }
         const error = new Error(
-          `Cannot set value '${value}' to property '${prop.propertyName}': ${message} (validate.${index})`
+          `Cannot set value '${value}' to property '${prop.name}': ${message} (validate.${index})`
         )
         if (aggregate) {
           errors.push(error)

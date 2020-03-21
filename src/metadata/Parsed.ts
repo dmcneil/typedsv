@@ -3,8 +3,8 @@ import { isValidationType, ValidationOptions, ValidationType } from './Validatio
 
 export type Transformer = (input: string) => any
 
-export interface ParsedArgs {
-  readonly propertyName: string
+export interface ParsedProperty {
+  readonly name: string
   readonly options: ParsedOptions
 }
 
@@ -40,6 +40,6 @@ export default function Parsed(options: ParsedOptions | number | string) {
       options.validate = validate as ValidationOptions
     }
 
-    getStore().putParsed(object.constructor, { propertyName, options })
+    getStore().putParsed(object.constructor, { name: propertyName, options })
   }
 }

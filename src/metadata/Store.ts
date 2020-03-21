@@ -1,8 +1,8 @@
 import { ConstructableType } from '../common/ConstructableType'
-import { ParsedArgs } from './Parsed'
+import { ParsedProperty } from './Parsed'
 
 class Store {
-  private readonly parsed: Map<Function, ParsedArgs[]> = new Map()
+  private readonly parsed: Map<Function, ParsedProperty[]> = new Map()
 
   getParsed<T>(type: ConstructableType<T>) {
     const md = this.parsed.get(type)
@@ -12,7 +12,7 @@ class Store {
     return md
   }
 
-  putParsed(target: Function, arg: ParsedArgs) {
+  putParsed(target: Function, arg: ParsedProperty) {
     const o = this.parsed.get(target)
     if (!o) {
       this.parsed.set(target, [arg])
