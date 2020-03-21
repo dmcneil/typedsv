@@ -192,6 +192,23 @@ bar",654,E,Foo,
     })
   })
 
+  it('should allow empty cells', async () => {
+    const data = `
+1,A,123,"",Fo"o,""
+2,B,321,,,,Foo"bar
+`
+    const reader = new Reader()
+    const lines = await reader.read(data)
+
+    expect(lines).toEqual({
+      headers: [],
+      rows: [
+        ['1', 'A', '123', '', 'Fo"o', ''],
+        ['2', 'B', '321', '', '', '', 'Foo"bar']
+      ]
+    })
+  })
+
   describe('inputs', () => {
     it('should accept a stream', async () => {
       const stream = createReadStream('./src/parser/fixtures/basic.csv', { highWaterMark: 1000 })
@@ -247,24 +264,24 @@ A,B,C,D,E
   })
 
   describe('header: false', () => {
-    it('should not throw an error if there are less columns in a row', () => {
+    it('should throw an error if there are less columns in a row', () => {
       const data = `
 1,A,123,"B","Fo,o"
 2,B,321
 `
       const reader = new Reader({ strict: true, header: false })
 
-      expect(() => reader.read(data)).not.toThrow()
+      expect(() => reader.read(data)).toThrowError(new Error('Line 2 has 3 columns but 5 were expected'))
     })
 
-    it('should not throw an error if there are more columns in a row', () => {
+    it('should throw an error if there are more columns in a row', () => {
       const data = `
 1,A,123,"B",""
 2,B,321,"C",Foobar,FOO
 `
       const reader = new Reader({ strict: true, header: false })
 
-      expect(() => reader.read(data)).not.toThrow()
+      expect(() => reader.read(data)).toThrowError(new Error('Line 2 has 6 columns but 5 were expected'))
     })
   })
 })

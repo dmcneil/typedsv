@@ -42,9 +42,9 @@ export class Reader {
   private escaped: boolean
   private quoted: boolean
   private commented: boolean
-  private lineNumber: number = 0
+  private lineNumber: number
 
-  private expectedColumnCount: number = -1
+  private expectedColumnCount: number
   private result: ReaderResult
 
   private readonly space: number = ' '.charCodeAt(0)
@@ -78,6 +78,7 @@ export class Reader {
     this.quoted = false
     this.commented = false
     this.lineNumber = 0
+    this.expectedColumnCount = 0
     this.result = { headers: [], rows: [] }
   }
 
@@ -128,10 +129,11 @@ export class Reader {
     let read: number = 0
 
     for (let i = 0; i < input.length; i++) {
-      const c = input[i]
-      const prev = i > 0 ? input[i - 1] : null
-      const next = i < input.length - 1 ? input[i + 1] : null
-      const eol = (c === this.cr && next === this.newline) || c === this.newline
+      const c: number = input[i]
+      const prev: number | null = i > 0 ? input[i - 1] : null
+      const next: number | null = i < input.length - 1 ? input[i + 1] : null
+      const eol: boolean = (c === this.cr && next === this.newline) || c === this.newline
+      const isNextEol: boolean = next === this.newline || (next === this.cr && input[i + 2] === this.newline)
 
       if (c === this.comment && !this.commented && !this.quoted) {
         this.commented = true
@@ -162,8 +164,8 @@ export class Reader {
         if (this.quoted && !this.escaped) {
           this.quoted = false
 
-          // Properly quoted but empty is OK.
-          if (cell.length === 0) {
+          // Properly quoted but empty at EOL is OK.
+          if ((eol || isNextEol) && cell.length === 0) {
             row.push('')
           }
 
@@ -223,17 +225,16 @@ export class Reader {
   }
 
   private rowCallback = (row: string[]): void => {
+    if (this.lineNumber === 1) {
+      this.expectedColumnCount = row.length
+    } else if (this.strict && row.length !== this.expectedColumnCount) {
+      throw new Error(`Line ${this.lineNumber} has ${row.length} columns but ${this.expectedColumnCount} were expected`)
+    }
+
     if (this.header) {
       if (this.lineNumber === 1) {
         this.result.headers = row
-        this.expectedColumnCount = this.result.headers.length
       } else {
-        if (this.strict && row.length !== this.expectedColumnCount) {
-          throw new Error(
-            `Line ${this.lineNumber} has ${row.length} columns but ${this.expectedColumnCount} were expected`
-          )
-        }
-
         const rows = this.result.rows as object[]
         const objectRow = {}
         this.result.headers.forEach((header: string, index: number) => {
