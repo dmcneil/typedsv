@@ -14,11 +14,11 @@ type ParserOptions = {} & ReaderOptions
 
 export class Parser<T> {
   private readonly type: ConstructableType<T>
-  private readonly parsedArgs: ParsedProperty[]
+  private readonly properties: ParsedProperty[]
 
   constructor(type: ConstructableType<T>) {
     this.type = type
-    this.parsedArgs = getStore().getParsed(this.type)
+    this.properties = getStore().getParsed(this.type)
   }
 
   parse = (input: Input, options?: ParserOptions): Promise<T[]> => {
@@ -33,7 +33,7 @@ export class Parser<T> {
 
         if (row instanceof Array) {
           row.forEach((value: any, index: number) => {
-            this.parsedArgs
+            this.properties
               .filter(args => args.options.index === index)
               .forEach((prop: ParsedProperty) => {
                 try {
@@ -45,7 +45,7 @@ export class Parser<T> {
           })
         } else if (typeof row === 'object') {
           result.headers.forEach((value: string, index: number) => {
-            this.parsedArgs
+            this.properties
               .filter(args => args.options.header === value || args.options.index === index)
               .forEach((prop: ParsedProperty) => {
                 try {
