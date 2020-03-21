@@ -20,7 +20,7 @@ describe('Parsed', () => {
         @Parsed(3.14)
         a: string
       }
-    }).toThrowError(new Error('@Parsed property \'a\' has a non-integer index value: 3.14'))
+    }).toThrowError(new Error("@Parsed property 'a' has a non-integer index value: 3.14"))
   })
 
   it('should accept a string as header', () => {
@@ -76,7 +76,7 @@ describe('Parsed', () => {
 
       expect(() => {
         Parsed({})(Foo, 'a')
-      }).toThrowError(new Error('@Parsed property \'a\' must have either an index or header option'))
+      }).toThrowError(new Error("@Parsed property 'a' must have either an index or header option"))
     })
   })
 })

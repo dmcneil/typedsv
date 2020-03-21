@@ -152,9 +152,9 @@ A,B
       }
 
       const parser = new Parser(Data)
-      await expect(parser.parse(data))
-        .rejects
-        .toThrowError(new Error('Cannot set value \'foo\' to property \'a\': invalid (validate.0)'))
+      await expect(parser.parse(data)).rejects.toThrowError(
+        new Error("Cannot set value 'foo' to property 'a': invalid (validate.0)")
+      )
     })
 
     it('should throw the first error if an array of functions', async () => {
@@ -173,9 +173,9 @@ A,B
       }
 
       const parser = new Parser(Data)
-      await expect(parser.parse(data))
-        .rejects
-        .toThrowError(new Error('Cannot set value \'foo\' to property \'a\': invalid (validate.1)'))
+      await expect(parser.parse(data)).rejects.toThrowError(
+        new Error("Cannot set value 'foo' to property 'a': invalid (validate.1)")
+      )
     })
 
     describe('aggregate', () => {
@@ -198,10 +198,12 @@ A,B
         }
 
         const parser = new Parser(Data)
-        await expect(parser.parse(data))
-          .rejects
-          .toThrowError(new Error('Cannot set value \'foo\' to property \'a\': invalid (validate.1), ' +
-            'Cannot set value \'foo\' to property \'a\': length must be 1 (validate.2)'))
+        await expect(parser.parse(data)).rejects.toThrowError(
+          new Error(
+            "Cannot set value 'foo' to property 'a': invalid (validate.1), " +
+              "Cannot set value 'foo' to property 'a': length must be 1 (validate.2)"
+          )
+        )
       })
 
       it('should throw the first error when false', async () => {
@@ -223,9 +225,9 @@ A,B
         }
 
         const parser = new Parser(Data)
-        await expect(parser.parse(data))
-          .rejects
-          .toThrowError(new Error('Cannot set value \'foo\' to property \'a\': invalid (validate.1)'))
+        await expect(parser.parse(data)).rejects.toThrowError(
+          new Error("Cannot set value 'foo' to property 'a': invalid (validate.1)")
+        )
       })
     })
   })
