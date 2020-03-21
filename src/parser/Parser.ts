@@ -37,7 +37,7 @@ export class Parser<T> {
               .filter(args => args.options.index === index)
               .forEach((prop: ParsedProperty) => {
                 try {
-                  Parser.setParsedProperty(target, prop, row[index])
+                  Parser.setParsedProperty(target, prop, value)
                 } catch (e) {
                   reject(e)
                 }
