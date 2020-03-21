@@ -22,12 +22,12 @@ class Store {
   }
 }
 
-export function getStore(): Store {
-  const g: any = global
+let store: Store
 
-  if (!g.store) {
-    g.store = new Store()
+export function getStore(): Store {
+  if (!store) {
+    store = new Store()
   }
 
-  return g.store
+  return store
 }
