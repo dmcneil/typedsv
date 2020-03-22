@@ -18,6 +18,7 @@
   - [Notes on Property Types](#notes-on-property-types)
   - [Additional Options](#additional-options)
     - [Transform](#transform)
+    - [Validate](#validate)
 
 ## Installation
 
@@ -236,7 +237,7 @@ second: string // 'bar'
 
 ### Mapping by Header
 
-Pass a `string` or `{ header: string }` to specify which column to map based on its header. It is required that `{ header: true }` is used when calling `Parser#parse` and the header is on the first line of the input:  
+Pass a `string` or `{ header: string }` to specify which column to map based on its header. It is required that `{ header: true }` is used when calling `Parser#parse` and the header is on the first line of the input:
 
 ```typescript
 // A,B,C
@@ -323,4 +324,77 @@ first: number // OK as '3' will be parsed to 3
 
 @Parsed({ index: 1, transform: (input: string) => input.split(',') })
 second: string // ERROR as ['B', 'A', 'R'] is not clearly intentional to be a string.
+```
+
+#### Validate
+
+Value validation can be performed before the property is set by using the `validate` option.
+
+The option accepts a few different value types but the main idea is that the function(s) take the form `(input) => bool` where a return value of `true` means the value is valid.
+
+> **NOTE** the `validate` functions are called _after_ the optional `transform` function.
+
+```typescript
+// 0,"John","Doe"
+
+@Parsed({
+  index: 0,
+  validate: (id: number) => id > 0
+})
+id: number
+
+// Validation failed for property id: ['validate.0']
+```
+
+The default error message just takes the form of `validate.${index}` where `index` is the position of the validation function that failed. To provide a custom message use the `object` form with the `message` option:
+
+```typescript
+// 0,"John","Doe"
+
+@Parsed({
+  index: 0,
+  validate: { message: 'id must be > 0', function: (id: number) => id > 0 }
+})
+id: number;
+
+// Validation failed for property id: ['id must be > 0']
+```
+
+Multiple objects/functions can also be passed as in an array. They are executed in order until either all pass or there is an error:
+
+```typescript
+// 1,"John","Doe"
+
+@Parsed({
+  index: 0,
+  validate: [
+    (id: number) => id > 0,
+    (id: number) => id > 50,
+    { message: 'id cannot be 1', function: (id: number) => id !== 1 } // will not run
+  ]
+})
+id: number;
+
+// Validation failed for property id: ['validate.1']
+```
+
+In case you want to collect all validation errors, use the `object` form with the `aggregate` and `functions` options:
+
+```typescript
+// 1,"John","Doe"
+
+@Parsed({
+  index: 0,
+  validate: {
+    aggregate: true,
+    functions: [
+      (id: number) => id > 50,
+      { message: 'id must be > 100', function: (id: number) => id > 100 },
+      (id: number) => id !== 0  // will still run even though the validation has failed
+    ]
+  }
+})
+id: number;
+
+// Validation failed for property id: ['validate.0', 'id must be > 100']
 ```

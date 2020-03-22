@@ -76,7 +76,7 @@ export class ParsedProperty {
       let message: string
 
       if (isValidateObject(v)) {
-        f = v.f
+        f = v.function
         message = v.message
       } else {
         f = v

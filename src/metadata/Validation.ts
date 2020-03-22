@@ -1,8 +1,8 @@
 export type ValidateFunction = (input: any) => boolean
 
-export type ValidateObject = { f: ValidateFunction; message?: string }
+export type ValidateObject = { function: ValidateFunction; message?: string }
 export const isValidateObject = (t: any): t is ValidateObject => {
-  return 'f' in t && 'message' in t
+  return 'function' in t && 'message' in t
 }
 
 export type ValidateType = ValidateFunction | ValidateObject

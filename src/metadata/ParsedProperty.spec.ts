@@ -85,6 +85,24 @@ describe('ParsedProperty', () => {
       expect(() => parsedProperty.set(data, 'foo')).toThrowError(new ValidateError(parsedProperty, 'foo', 'validate.0'))
     })
 
+    it('should accept an object', async () => {
+      class Data {
+        @Parsed({
+          index: 0
+        })
+        got: string
+      }
+
+      const data = new Data()
+      const parsedProperty = new ParsedProperty('got', {
+        validate: { message: 'starts with F', function: input => input.startsWith('F') }
+      })
+
+      expect(() => parsedProperty.set(data, 'foo')).toThrowError(
+        new ValidateError(parsedProperty, 'foo', 'starts with F')
+      )
+    })
+
     it('should throw the first error from an array of functions', async () => {
       class Data {
         @Parsed({
@@ -98,7 +116,7 @@ describe('ParsedProperty', () => {
         validate: [
           input => input.length === 3,
           input => input.startsWith('F'),
-          { message: 'length must be 1', f: input => input.length === 1 }
+          { message: 'length must be 1', function: input => input.length === 1 }
         ]
       })
 
@@ -121,7 +139,7 @@ describe('ParsedProperty', () => {
             functions: [
               input => input.length === 3,
               input => input.startsWith('F'),
-              { message: 'length must be 1', f: input => input.length === 1 }
+              { message: 'length must be 1', function: input => input.length === 1 }
             ]
           }
         })
@@ -144,7 +162,7 @@ describe('ParsedProperty', () => {
             functions: [
               input => input.length === 3,
               input => input.startsWith('F'),
-              { message: 'length must be 1', f: input => input.length === 1 }
+              { message: 'length must be 1', function: input => input.length === 1 }
             ]
           }
         })
