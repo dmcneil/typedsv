@@ -1,18 +1,14 @@
+import { ParsedProperty } from './ParsedProperty'
 import { getStore } from './Store'
-import { isValidationType, ValidationOptions, ValidationType } from './Validation'
+import { isValidationType, ValidateOptions, ValidateFunction } from './Validation'
 
-export type Transformer = (input: string) => any
-
-export interface ParsedProperty {
-  readonly name: string
-  readonly options: ParsedOptions
-}
+export type TransformFunction = (input: string) => any
 
 export interface ParsedOptions {
   index?: number
   header?: string
-  transform?: Transformer
-  validate?: ValidationType | ValidationType[] | ValidationOptions
+  transform?: TransformFunction
+  validate?: ValidateFunction | ValidateFunction[] | ValidateOptions
 }
 
 export default function Parsed(options: ParsedOptions | number | string) {
@@ -37,9 +33,9 @@ export default function Parsed(options: ParsedOptions | number | string) {
       } else if (isValidationType(validate)) {
         validate = { functions: [validate] }
       }
-      options.validate = validate as ValidationOptions
+      options.validate = validate as ValidateOptions
     }
 
-    getStore().putParsed(object.constructor, { name: propertyName, options })
+    getStore().putParsed(object.constructor, new ParsedProperty(propertyName, options))
   }
 }

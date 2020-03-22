@@ -1,5 +1,6 @@
 import { ConstructableType } from '../common/ConstructableType'
-import { ParsedProperty } from './Parsed'
+import { InvalidTypeError } from '../error/InvalidTypeError'
+import { ParsedProperty } from './ParsedProperty'
 
 class Store {
   private readonly parsed: Map<Function, ParsedProperty[]> = new Map()
@@ -7,7 +8,7 @@ class Store {
   getParsed<T>(type: ConstructableType<T>) {
     const md = this.parsed.get(type)
     if (!md) {
-      throw new Error(`${type.name} type cannot be parsed. Does it contain any properties decorated with @Parsed?`)
+      throw new InvalidTypeError(type)
     }
     return md
   }

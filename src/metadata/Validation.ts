@@ -5,12 +5,12 @@ export const isValidationObject = (t: any): t is ValidationObject => {
   return 'f' in t && 'message' in t
 }
 
-export type ValidationType = ValidationFunction | ValidationObject
-export const isValidationType = (t: any): t is ValidationType => {
+export type ValidateFunction = ValidationFunction | ValidationObject
+export const isValidationType = (t: any): t is ValidateFunction => {
   return typeof t === 'function' || isValidationObject(t)
 }
 
-export interface ValidationOptions {
+export interface ValidateOptions {
   aggregate?: boolean
-  functions: ValidationType[]
+  functions: ValidateFunction[]
 }
