@@ -194,10 +194,8 @@ export class Reader {
         }
 
         if (eol) {
-          if (row.length === 0) {
-            if (cell.length === 0) {
-              continue
-            }
+          if (row.length === 0 && cell.length === 0) {
+            continue
           }
 
           this.lineNumber++
