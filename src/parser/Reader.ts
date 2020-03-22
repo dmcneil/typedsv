@@ -194,7 +194,7 @@ export class Reader {
         }
 
         if (eol) {
-          if (row.length === 0) {
+          if (row.length === 0 && cell.length === 0) {
             continue
           }
 
