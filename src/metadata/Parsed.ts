@@ -1,6 +1,6 @@
 import { ParsedProperty } from './ParsedProperty'
 import { getStore } from './Store'
-import { isValidationType, ValidateOptions, ValidateFunction } from './Validation'
+import { ValidateOptions, ValidateType } from './Validation'
 
 export type TransformFunction = (input: string) => any
 
@@ -8,7 +8,7 @@ export interface ParsedOptions {
   index?: number
   header?: string
   transform?: TransformFunction
-  validate?: ValidateFunction | ValidateFunction[] | ValidateOptions
+  validate?: ValidateType | ValidateType[] | ValidateOptions
 }
 
 export default function Parsed(options: ParsedOptions | number | string) {
@@ -24,16 +24,6 @@ export default function Parsed(options: ParsedOptions | number | string) {
 
     if (typeof options.index === 'undefined' && typeof options.header === 'undefined') {
       throw new Error(`@Parsed property '${propertyName}' must have either an index or header option`)
-    }
-
-    let { validate } = options
-    if (validate) {
-      if (validate instanceof Array) {
-        validate = { functions: validate }
-      } else if (isValidationType(validate)) {
-        validate = { functions: [validate] }
-      }
-      options.validate = validate as ValidateOptions
     }
 
     getStore().putParsed(object.constructor, new ParsedProperty(propertyName, options))

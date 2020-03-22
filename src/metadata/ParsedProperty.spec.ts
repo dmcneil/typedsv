@@ -1,5 +1,5 @@
 /* tslint:disable:max-classes-per-file */
-import { Parser } from '..'
+import { ValidateError } from '../error/ValidateError'
 import Parsed from './Parsed'
 import { ParsedProperty } from './ParsedProperty'
 
@@ -72,92 +72,85 @@ describe('ParsedProperty', () => {
 
   describe('validate', () => {
     it('should accept a function', async () => {
-      const data = `foo`
-
       class Data {
         @Parsed({
-          index: 0,
-          validate: input => input.startsWith('F')
+          index: 0
         })
-        a: string
+        got: string
       }
 
-      const parser = new Parser(Data)
-      await expect(parser.parse(data)).rejects.toThrowError(
-        new Error('Cannot set value \'foo\' to property \'a\': invalid (validate.0)')
-      )
+      const data = new Data()
+      const parsedProperty = new ParsedProperty('got', { validate: input => input.startsWith('F') })
+
+      expect(() => parsedProperty.set(data, 'foo')).toThrowError(new ValidateError(parsedProperty, 'foo', 'validate.0'))
     })
 
     it('should throw the first error from an array of functions', async () => {
-      const data = `foo`
-
       class Data {
         @Parsed({
-          index: 0,
-          validate: [
-            input => input.length === 3,
-            input => input.startsWith('F'),
-            { message: 'length must be 1', f: input => input.length === 1 }
-          ]
+          index: 0
         })
-        a: string
+        got: string
       }
 
-      const parser = new Parser(Data)
-      await expect(parser.parse(data)).rejects.toThrowError(
-        new Error('Cannot set value \'foo\' to property \'a\': invalid (validate.1)')
-      )
+      const data = new Data()
+      const parsedProperty = new ParsedProperty('got', {
+        validate: [
+          input => input.length === 3,
+          input => input.startsWith('F'),
+          { message: 'length must be 1', f: input => input.length === 1 }
+        ]
+      })
+
+      expect(() => parsedProperty.set(data, 'foo')).toThrowError(new ValidateError(parsedProperty, 'foo', 'validate.1'))
     })
 
     describe('aggregate', () => {
       it('should throw the first error when false', async () => {
-        const data = `foo`
-
         class Data {
           @Parsed({
-            index: 0,
-            validate: {
-              aggregate: false,
-              functions: [
-                input => input.length === 3,
-                input => input.startsWith('F'),
-                { message: 'length must be 1', f: input => input.length === 1 }
-              ]
-            }
+            index: 0
           })
-          a: string
+          got: string
         }
 
-        const parser = new Parser(Data)
-        await expect(parser.parse(data)).rejects.toThrowError(
-          new Error('Cannot set value \'foo\' to property \'a\': invalid (validate.1)')
-        )
+        const data = new Data()
+        const property = new ParsedProperty('got', {
+          validate: {
+            aggregate: false,
+            functions: [
+              input => input.length === 3,
+              input => input.startsWith('F'),
+              { message: 'length must be 1', f: input => input.length === 1 }
+            ]
+          }
+        })
+
+        expect(() => property.set(data, 'foo')).toThrowError(new ValidateError(property, 'foo', 'validate.1'))
       })
 
       it('should combine errors when true', async () => {
-        const data = `foo`
-
         class Data {
           @Parsed({
-            index: 0,
-            validate: {
-              aggregate: true,
-              functions: [
-                input => input.length === 3,
-                input => input.startsWith('F'),
-                { message: 'length must be 1', f: input => input.length === 1 }
-              ]
-            }
+            index: 0
           })
-          a: string
+          got: string
         }
 
-        const parser = new Parser(Data)
-        await expect(parser.parse(data)).rejects.toThrowError(
-          new Error(
-            'Cannot set value \'foo\' to property \'a\': invalid (validate.1), ' +
-            'Cannot set value \'foo\' to property \'a\': length must be 1 (validate.2)'
-          )
+        const data = new Data()
+        const parsedProperty = new ParsedProperty('got', {
+          validate: {
+            aggregate: true,
+            functions: [
+              input => input.length === 3,
+              input => input.startsWith('F'),
+              { message: 'length must be 1', f: input => input.length === 1 }
+            ]
+          }
+        })
+
+        expect(() => parsedProperty.set(data, 'foo')).toThrowError(
+          new ValidateError(parsedProperty, 1, 'validate.1', 'length must be 1')
         )
       })
     })

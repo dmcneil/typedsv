@@ -1,5 +1,5 @@
 import { ConstructableType } from '../common/ConstructableType'
-import { InvalidTypeError } from '../error/InvalidTypeError'
+import { NotParsableError } from '../error/NotParsableError'
 import { ParsedProperty } from './ParsedProperty'
 
 class Store {
@@ -8,7 +8,7 @@ class Store {
   getParsed<T>(type: ConstructableType<T>) {
     const md = this.parsed.get(type)
     if (!md) {
-      throw new InvalidTypeError(type)
+      throw new NotParsableError(type)
     }
     return md
   }
