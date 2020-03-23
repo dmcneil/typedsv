@@ -210,7 +210,7 @@ export class Reader {
           }
 
           const [start, end] = this.range
-          if ((!start || (start && this.lineNumber >= start)) && (!end || (end && this.lineNumber < end))) {
+          if ((!start || this.lineNumber >= start) && (!end || this.lineNumber < end)) {
             if (cb) {
               cb(row)
             }
