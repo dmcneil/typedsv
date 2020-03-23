@@ -284,4 +284,42 @@ A,B,C,D,E
       expect(() => reader.read(data)).toThrowError(new Error('Line 2 has 6 columns but 5 were expected'))
     })
   })
+
+  describe('range', () => {
+    it('should start at [n,]', async () => {
+      const data = `
+1,A,123
+2,B,456
+3,C,789
+`
+      const reader = new Reader({ range: [2] })
+      const got = await reader.read(data)
+
+      expect(got).toEqual({
+        headers: [],
+        rows: [
+          ['2', 'B', '456'],
+          ['3', 'C', '789']
+        ]
+      })
+    })
+
+    it('should end exclusively at [,n]', async () => {
+      const data = `
+1,A,123
+2,B,456
+3,C,789
+`
+      const reader = new Reader({ range: [1, 3] })
+      const got = await reader.read(data)
+
+      expect(got).toEqual({
+        headers: [],
+        rows: [
+          ['1', 'A', '123'],
+          ['2', 'B', '456']
+        ]
+      })
+    })
+  })
 })

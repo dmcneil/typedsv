@@ -10,6 +10,7 @@ export interface ReaderOptions {
   newline?: string
   carriageReturn?: string
   comment?: string
+  range?: [number?, number?]
 }
 
 const DefaultReaderOptions: ReaderOptions = Object.freeze({
@@ -20,7 +21,8 @@ const DefaultReaderOptions: ReaderOptions = Object.freeze({
   delimiter: ',',
   newline: '\n',
   carriageReturn: '\r',
-  comment: '#'
+  comment: '#',
+  range: []
 })
 
 export interface ReaderResult {
@@ -31,6 +33,7 @@ export interface ReaderResult {
 export class Reader {
   private readonly strict: boolean
 
+  private readonly range: [number?, number?]
   private readonly header: boolean
   private readonly quote: number
   private readonly escape: number
@@ -64,6 +67,7 @@ export class Reader {
     }
 
     this.strict = opts.strict
+    this.range = opts.range
     this.header = opts.header
     this.quote = opts.quote.charCodeAt(0)
     this.escape = opts.escape.charCodeAt(0)
@@ -194,23 +198,28 @@ export class Reader {
         }
 
         if (eol) {
+          this.lineNumber++
+
           if (row.length === 0 && cell.length === 0) {
             continue
           }
-
-          this.lineNumber++
 
           if (cell.length > 0) {
             row.push(String.fromCharCode(...cell))
             cell = []
           }
 
-          if (cb) {
-            cb(row)
+          const [start, end] = this.range
+          if ((!start || (start && this.lineNumber >= start)) && (!end || (end && this.lineNumber < end))) {
+            if (cb) {
+              cb(row)
+            }
+            read = read + ((c === this.cr ? i + 2 : i + 1) - read)
+          } else {
+            read = i + 1
           }
-          row = []
 
-          read = read + ((c === this.cr ? i + 2 : i + 1) - read)
+          row = []
 
           continue
         }
