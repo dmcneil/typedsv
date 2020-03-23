@@ -1,6 +1,6 @@
 import 'reflect-metadata'
 import { InvalidPropertyTypeError } from '../error/InvalidPropertyTypeError'
-import { ValidateError } from '../error/ValidateError'
+import { ValidationError } from '../error/ValidationError'
 import { ParsedOptions } from './Parsed'
 import { isValidateObject, isValidateType, ValidateFunction, ValidateOptions, ValidateType } from './Validation'
 
@@ -91,13 +91,13 @@ export class ParsedProperty {
         if (aggregate) {
           errors.push(message)
         } else {
-          throw new ValidateError(this, value, message)
+          throw new ValidationError(this, value, message)
         }
       }
     })
 
     if (errors.length > 0) {
-      throw new ValidateError(this, value, ...errors)
+      throw new ValidationError(this, value, ...errors)
     }
   }
 }

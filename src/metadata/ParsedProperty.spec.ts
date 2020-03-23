@@ -1,5 +1,5 @@
 /* tslint:disable:max-classes-per-file */
-import { ValidateError } from '../error/ValidateError'
+import { ValidationError } from '../error/ValidationError'
 import Parsed from './Parsed'
 import { ParsedProperty } from './ParsedProperty'
 
@@ -82,7 +82,9 @@ describe('ParsedProperty', () => {
       const data = new Data()
       const parsedProperty = new ParsedProperty('got', { validate: input => input.startsWith('F') })
 
-      expect(() => parsedProperty.set(data, 'foo')).toThrowError(new ValidateError(parsedProperty, 'foo', 'validate.0'))
+      expect(() => parsedProperty.set(data, 'foo')).toThrowError(
+        new ValidationError(parsedProperty, 'foo', 'validate.0')
+      )
     })
 
     it('should accept an object', async () => {
@@ -99,7 +101,7 @@ describe('ParsedProperty', () => {
       })
 
       expect(() => parsedProperty.set(data, 'foo')).toThrowError(
-        new ValidateError(parsedProperty, 'foo', 'starts with F')
+        new ValidationError(parsedProperty, 'foo', 'starts with F')
       )
     })
 
@@ -120,7 +122,9 @@ describe('ParsedProperty', () => {
         ]
       })
 
-      expect(() => parsedProperty.set(data, 'foo')).toThrowError(new ValidateError(parsedProperty, 'foo', 'validate.1'))
+      expect(() => parsedProperty.set(data, 'foo')).toThrowError(
+        new ValidationError(parsedProperty, 'foo', 'validate.1')
+      )
     })
 
     describe('aggregate', () => {
@@ -144,7 +148,7 @@ describe('ParsedProperty', () => {
           }
         })
 
-        expect(() => property.set(data, 'foo')).toThrowError(new ValidateError(property, 'foo', 'validate.1'))
+        expect(() => property.set(data, 'foo')).toThrowError(new ValidationError(property, 'foo', 'validate.1'))
       })
 
       it('should combine errors when true', async () => {
@@ -168,7 +172,7 @@ describe('ParsedProperty', () => {
         })
 
         expect(() => parsedProperty.set(data, 'foo')).toThrowError(
-          new ValidateError(parsedProperty, 1, 'validate.1', 'length must be 1')
+          new ValidationError(parsedProperty, 1, 'validate.1', 'length must be 1')
         )
       })
     })

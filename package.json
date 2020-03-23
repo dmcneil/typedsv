@@ -12,7 +12,7 @@
     "build": "yarn clean && tsc",
     "test": "jest --config jestconfig.json",
     "format": "prettier --write \"src/**/*.ts\"",
-    "lint": "tslint -p tsconfig.json"
+    "lint": "tslint --fix -p tsconfig.json"
   },
   "dependencies": {
     "reflect-metadata": "^0.1.13"
