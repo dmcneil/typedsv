@@ -24,6 +24,8 @@
 
 > **NOTE** TypeScript **3.3+** is required.
 
+Install the package:
+
 ```
 npm install typedsv --save
 ```
