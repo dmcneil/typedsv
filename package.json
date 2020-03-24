@@ -9,7 +9,7 @@
   "types": "./build/index.d.ts",
   "scripts": {
     "clean": "rm -rf ./build/",
-    "build": "yarn clean && tsc",
+    "build": "npm run clean && tsc",
     "test": "jest --config jestconfig.json",
     "format": "prettier --write \"src/**/*.ts\"",
     "lint": "tslint --fix -p tsconfig.json"
