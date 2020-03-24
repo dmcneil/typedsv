@@ -211,7 +211,7 @@ bar",654,E,Foo,
 
   describe('inputs', () => {
     it('should accept a stream', async () => {
-      const stream = createReadStream('./src/parser/fixtures/basic.csv', { highWaterMark: 1000 })
+      const stream = createReadStream('./src/parser/fixtures/basic.csv')
       const reader = new Reader({ header: true })
       const lines = await reader.read(stream)
 
@@ -222,6 +222,20 @@ bar",654,E,Foo,
           { ID: '2', FirstName: 'Jane', LastName: 'Doe' },
           { ID: '3', FirstName: 'Matt', LastName: 'Smi\nth' },
           { ID: '4', FirstName: 'Jessica', LastName: 'Jones' }
+        ]
+      })
+    })
+
+    it('should destroy a stream early when using a range with an end line', async () => {
+      const stream = createReadStream('./src/parser/fixtures/basic.csv', { highWaterMark: 1 })
+      const reader = new Reader({ header: true, range: [1, 4] })
+      const lines = await reader.read(stream)
+
+      expect(lines).toEqual({
+        headers: ['ID', 'FirstName', 'LastName'],
+        rows: [
+          { ID: '1', FirstName: 'John', LastName: 'Doe' },
+          { ID: '2', FirstName: 'Jane', LastName: 'Doe' }
         ]
       })
     })
@@ -318,6 +332,27 @@ A,B,C,D,E
         rows: [
           ['1', 'A', '123'],
           ['2', 'B', '456']
+        ]
+      })
+    })
+
+    it('should range between [n,n]', async () => {
+      const data = `
+1,A,123
+2,B,456
+3,C,789
+4,D,987
+5,E,654
+`
+      const reader = new Reader({ range: [1, 4] })
+      const got = await reader.read(data)
+
+      expect(got).toEqual({
+        headers: [],
+        rows: [
+          ['1', 'A', '123'],
+          ['2', 'B', '456'],
+          ['3', 'C', '789']
         ]
       })
     })
