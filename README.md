@@ -176,18 +176,20 @@ Values do not have to be wrapped in quote characters although there are some exc
 3,"Matt",Smith            # OK
 ```
 
-Values that contain a carriage return (default: `\r`), new line (default: `\n`), or the delimiter (default: `,`) must be wrapped in the quote character:
+Values that contain a carriage return (default: `\r`), new line (default: `\n`), the delimiter (default: `,`), or comment (default: `#`) must be wrapped in the quote character:
 
 ```
 # OK
 1,John,"Do\re"
 2,Jane,"Do\ne"
 3,Matt,"Smi,th"
+4,Megan,"Smi#th"
 
 # NOT OK
 1,John,Do\re
 2,Jane,Do\ne
 3,Matt,Smi,th
+4,Megan,Smi#th
 ```
 
 If a quoted value contains the quote character (default: `"`) then it must be escaped by a preceeding quote character:
