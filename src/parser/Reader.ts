@@ -10,6 +10,7 @@ export interface ReaderOptions {
   newline?: string
   carriageReturn?: string
   comment?: string
+  range?: [number?, number?]
 }
 
 const DefaultReaderOptions: ReaderOptions = Object.freeze({
@@ -20,7 +21,8 @@ const DefaultReaderOptions: ReaderOptions = Object.freeze({
   delimiter: ',',
   newline: '\n',
   carriageReturn: '\r',
-  comment: '#'
+  comment: '#',
+  range: []
 })
 
 export interface ReaderResult {
@@ -31,6 +33,7 @@ export interface ReaderResult {
 export class Reader {
   private readonly strict: boolean
 
+  private readonly range: [number?, number?]
   private readonly header: boolean
   private readonly quote: number
   private readonly escape: number
@@ -44,7 +47,7 @@ export class Reader {
   private commented: boolean
   private lineNumber: number
 
-  private expectedColumnCount: number
+  private maxColumns: number
   private result: ReaderResult
 
   private readonly space: number = ' '.charCodeAt(0)
@@ -64,6 +67,7 @@ export class Reader {
     }
 
     this.strict = opts.strict
+    this.range = opts.range
     this.header = opts.header
     this.quote = opts.quote.charCodeAt(0)
     this.escape = opts.escape.charCodeAt(0)
@@ -78,7 +82,7 @@ export class Reader {
     this.quoted = false
     this.commented = false
     this.lineNumber = 0
-    this.expectedColumnCount = 0
+    this.maxColumns = 0
     this.result = { headers: [], rows: [] }
   }
 
@@ -105,6 +109,8 @@ export class Reader {
   }
 
   private readReadable(input: Readable): Promise<ReaderResult> {
+    const [, end] = this.range
+
     let buffer: Buffer = null
 
     return new Promise<ReaderResult>((resolve, reject) => {
@@ -113,12 +119,18 @@ export class Reader {
         .on('data', async (chunk: Buffer) => {
           buffer = buffer === null ? chunk : Buffer.concat([buffer, chunk], buffer.length + chunk.length)
           buffer = this.readLines(buffer, this.rowCallback)
+          if (end && this.lineNumber >= end) {
+            input.destroy()
+            input.emit('end')
+          }
         })
         .on('end', () => resolve(this.result))
     })
   }
 
   private readLines(input: Buffer, cb?: (row: string[]) => void): Buffer {
+    const [start, end] = this.range
+
     let row: string[] = []
     let cell: number[] = []
 
@@ -129,6 +141,11 @@ export class Reader {
     let read: number = 0
 
     for (let i = 0; i < input.length; i++) {
+      // Return early if an explicit end has already been reached.
+      if (end && this.lineNumber >= end) {
+        return input.slice(0, 0)
+      }
+
       const c: number = input[i]
       const prev: number | null = i > 0 ? input[i - 1] : null
       const next: number | null = i < input.length - 1 ? input[i + 1] : null
@@ -194,23 +211,27 @@ export class Reader {
         }
 
         if (eol) {
+          this.lineNumber++
+
           if (row.length === 0 && cell.length === 0) {
             continue
           }
-
-          this.lineNumber++
 
           if (cell.length > 0) {
             row.push(String.fromCharCode(...cell))
             cell = []
           }
 
-          if (cb) {
-            cb(row)
+          if ((!start || this.lineNumber >= start) && (!end || this.lineNumber < end)) {
+            if (cb) {
+              cb(row)
+            }
+            read = read + ((c === this.cr ? i + 2 : i + 1) - read)
+          } else {
+            read = i + 1
           }
-          row = []
 
-          read = read + ((c === this.cr ? i + 2 : i + 1) - read)
+          row = []
 
           continue
         }
@@ -226,9 +247,9 @@ export class Reader {
 
   private rowCallback = (row: string[]): void => {
     if (this.lineNumber === 1) {
-      this.expectedColumnCount = row.length
-    } else if (this.strict && row.length !== this.expectedColumnCount) {
-      throw new Error(`Line ${this.lineNumber} has ${row.length} columns but ${this.expectedColumnCount} were expected`)
+      this.maxColumns = row.length
+    } else if (this.strict && row.length !== this.maxColumns) {
+      throw new Error(`Line ${this.lineNumber} has ${row.length} columns but ${this.maxColumns} were expected`)
     }
 
     if (this.header) {

@@ -207,15 +207,102 @@ Non-quoted values can contain the quote character without the escaping:
 
 If the first line of the input declares the value/field names then use the `{ header: true }` option.
 
-```typescript
-const input = `
+```
 "ID","FirstName","LastName"
 "1","John","Doe"
-`
+```
+
+```typescript
 parser.parse(input, { header: true })
 ```
 
 This option also enables the ability to map properties by the headers instead of by index as described in [Header-based Mapping](#header-based-mapping).
+
+#### Comments
+
+Lines that begin with the comment character (default: `#`) are skipped:
+
+```
+"ID","FirstName","LastName"
+"1","John","Doe"
+# this comment will be skipped
+"2","Jane","Doe"
+"3","Matt","Smith"
+```
+
+If a line ends with an inline comment, the line is parsed up until the comment:
+
+```
+"ID","FirstName","LastName"
+"1","John","Doe"
+"2","Jane","Doe" # this line is parsed up to this comment
+"3","Matt","Smith"
+```
+
+#### Line Range
+
+The `{ range: [number?, number?] }` option can be used to set the start line:
+
+```
+1,"John","Doe"
+2,"Jane","Doe"
+3,"Matt","Smith"
+4,"Megan","Smith"
+```
+
+```typescript
+parser.parse(input, { range: [2] })
+```
+
+```
+[
+  ['2', 'Jane', 'Doe'],
+  ['3', 'Matt', 'Smith'],
+  ['4', 'Megan', 'Smith']
+]
+```
+
+Set the end line:
+
+> **NOTE** the ending line is _exclusive_!
+
+```
+1,"John","Doe"
+2,"Jane","Doe"
+3,"Matt","Smith"
+4,"Megan","Smith"
+```
+
+```typescript
+parser.parse(input, { range: [, 3] }) // remember to include the comma!
+```
+
+```
+[
+  ['1', 'John', 'Doe'],
+  ['2', 'Jane', 'Doe']
+]
+```
+
+Or parse a range of lines:
+
+```
+1,"John","Doe"
+2,"Jane","Doe"
+3,"Matt","Smith"
+4,"Megan","Smith"
+```
+
+```typescript
+parser.parse(input, { range: [2, 4] })
+```
+
+```
+[
+  ['2', 'Jane', 'Doe'],
+  ['3', 'Matt', 'Smith']
+]
+```
 
 ## @Parsed
 
