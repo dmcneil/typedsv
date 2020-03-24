@@ -300,60 +300,121 @@ A,B,C,D,E
   })
 
   describe('range', () => {
-    it('should start at [n,]', async () => {
-      const data = `
+    describe('object', () => {
+      it('should start at { start: n }', async () => {
+        const data = `
 1,A,123
 2,B,456
 3,C,789
 `
-      const reader = new Reader({ range: [2] })
-      const got = await reader.read(data)
+        const reader = new Reader({ range: { start: 2 } })
+        const got = await reader.read(data)
 
-      expect(got).toEqual({
-        headers: [],
-        rows: [
-          ['2', 'B', '456'],
-          ['3', 'C', '789']
-        ]
+        expect(got).toEqual({
+          headers: [],
+          rows: [
+            ['2', 'B', '456'],
+            ['3', 'C', '789']
+          ]
+        })
       })
-    })
 
-    it('should end exclusively at [,n]', async () => {
-      const data = `
+      it('should end at { end: n }', async () => {
+        const data = `
 1,A,123
 2,B,456
 3,C,789
 `
-      const reader = new Reader({ range: [1, 3] })
-      const got = await reader.read(data)
+        const reader = new Reader({ range: { end: 3 } })
+        const got = await reader.read(data)
 
-      expect(got).toEqual({
-        headers: [],
-        rows: [
-          ['1', 'A', '123'],
-          ['2', 'B', '456']
-        ]
+        expect(got).toEqual({
+          headers: [],
+          rows: [
+            ['1', 'A', '123'],
+            ['2', 'B', '456']
+          ]
+        })
       })
-    })
 
-    it('should range between [n,n]', async () => {
-      const data = `
+      it('should range between { start: n, end: n }', async () => {
+        const data = `
 1,A,123
 2,B,456
 3,C,789
 4,D,987
 5,E,654
 `
-      const reader = new Reader({ range: [1, 4] })
-      const got = await reader.read(data)
+        const reader = new Reader({ range: { start: 1, end: 4 } })
+        const got = await reader.read(data)
 
-      expect(got).toEqual({
-        headers: [],
-        rows: [
-          ['1', 'A', '123'],
-          ['2', 'B', '456'],
-          ['3', 'C', '789']
-        ]
+        expect(got).toEqual({
+          headers: [],
+          rows: [
+            ['1', 'A', '123'],
+            ['2', 'B', '456'],
+            ['3', 'C', '789']
+          ]
+        })
+      })
+    })
+
+    describe('array', () => {
+      it('should start at [n,]', async () => {
+        const data = `
+1,A,123
+2,B,456
+3,C,789
+`
+        const reader = new Reader({ range: [2] })
+        const got = await reader.read(data)
+
+        expect(got).toEqual({
+          headers: [],
+          rows: [
+            ['2', 'B', '456'],
+            ['3', 'C', '789']
+          ]
+        })
+      })
+
+      it('should end exclusively at [,n]', async () => {
+        const data = `
+1,A,123
+2,B,456
+3,C,789
+`
+        const reader = new Reader({ range: [, 3] })
+        const got = await reader.read(data)
+
+        expect(got).toEqual({
+          headers: [],
+          rows: [
+            ['1', 'A', '123'],
+            ['2', 'B', '456']
+          ]
+        })
+      })
+
+      it('should range between [n,n]', async () => {
+        const data = `
+1,A,123
+2,B,456
+3,C,789
+4,D,987
+5,E,654
+`
+        const reader = new Reader({ range: [1, 4] })
+        const got = await reader.read(data)
+
+        expect(got).toEqual({
+          headers: [],
+          rows: [
+            ['1', 'A', '123'],
+            ['2', 'B', '456'],
+            ['3', 'C', '789']
+          ]
+        })
       })
     })
   })

@@ -1,6 +1,11 @@
 import { Readable } from 'stream'
 import { Input } from './Input'
 
+interface Range {
+  start?: number
+  end?: number
+}
+
 export interface ReaderOptions {
   strict?: boolean
   header?: boolean
@@ -8,9 +13,8 @@ export interface ReaderOptions {
   escape?: string
   delimiter?: string
   newline?: string
-  carriageReturn?: string
   comment?: string
-  range?: [number?, number?]
+  range?: [number?, number?] | Range
 }
 
 const DefaultReaderOptions: ReaderOptions = Object.freeze({
@@ -20,9 +24,8 @@ const DefaultReaderOptions: ReaderOptions = Object.freeze({
   escape: '"',
   delimiter: ',',
   newline: '\n',
-  carriageReturn: '\r',
   comment: '#',
-  range: []
+  range: { start: 1 }
 })
 
 export interface ReaderResult {
@@ -33,13 +36,12 @@ export interface ReaderResult {
 export class Reader {
   private readonly strict: boolean
 
-  private readonly range: [number?, number?]
+  private readonly range: Range
   private readonly header: boolean
   private readonly quote: number
   private readonly escape: number
   private readonly delimiter: number
   private readonly newline: number
-  private readonly cr: number
   private readonly comment: number
 
   private escaped: boolean
@@ -50,6 +52,7 @@ export class Reader {
   private maxColumns: number
   private result: ReaderResult
 
+  private readonly cr: number = '\r'.charCodeAt(0)
   private readonly space: number = ' '.charCodeAt(0)
 
   constructor(options?: ReaderOptions) {
@@ -67,13 +70,17 @@ export class Reader {
     }
 
     this.strict = opts.strict
+
+    if (opts.range instanceof Array) {
+      opts.range = { start: opts.range[0], end: opts.range[1] }
+    }
     this.range = opts.range
+
     this.header = opts.header
     this.quote = opts.quote.charCodeAt(0)
     this.escape = opts.escape.charCodeAt(0)
     this.delimiter = opts.delimiter.charCodeAt(0)
     this.newline = opts.newline.charCodeAt(0)
-    this.cr = opts.carriageReturn.charCodeAt(0)
     this.comment = opts.comment.charCodeAt(0)
   }
 
@@ -109,7 +116,7 @@ export class Reader {
   }
 
   private readReadable(input: Readable): Promise<ReaderResult> {
-    const [, end] = this.range
+    const { end } = this.range
 
     let buffer: Buffer = null
 
@@ -129,7 +136,7 @@ export class Reader {
   }
 
   private readLines(input: Buffer, cb?: (row: string[]) => void): Buffer {
-    const [start, end] = this.range
+    const { start, end } = this.range
 
     let row: string[] = []
     let cell: number[] = []

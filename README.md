@@ -243,7 +243,7 @@ If a line ends with an inline comment, the line is parsed up until the comment:
 
 #### Line Range
 
-The `{ range: [number?, number?] }` option can be used to set the start line:
+The `{ range: [number?, number?] | { start?: number, end?: number } }` option can be used to set the start line:
 
 ```
 1,"John","Doe"
@@ -253,7 +253,8 @@ The `{ range: [number?, number?] }` option can be used to set the start line:
 ```
 
 ```typescript
-parser.parse(input, { range: [2] })
+parser.parse(input, { range: [2] }) // array form
+parser.parse(input, { range: { start: 2 } }) // object form
 ```
 
 ```
@@ -266,8 +267,6 @@ parser.parse(input, { range: [2] })
 
 Set the end line:
 
-> **NOTE** the ending line is _exclusive_!
-
 ```
 1,"John","Doe"
 2,"Jane","Doe"
@@ -276,8 +275,11 @@ Set the end line:
 ```
 
 ```typescript
-parser.parse(input, { range: [, 3] }) // remember to include the comma!
+parser.parse(input, { range: [, 3] }) // array form, remember to include the comma!
+parser.parse(input, { range: { end: 3 } }) // object form
 ```
+
+> **NOTE** the ending line is _exclusive_!
 
 ```
 [
@@ -296,7 +298,8 @@ Or parse a range of lines:
 ```
 
 ```typescript
-parser.parse(input, { range: [2, 4] })
+parser.parse(input, { range: [2, 4] }) // array form
+parser.parse(input, { range: { start: 2, end: 4 } }) // object form
 ```
 
 ```
