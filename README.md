@@ -22,12 +22,39 @@
 
 ## Installation
 
-```
-# npm
-npm install typedsv
+> **NOTE** TypeScript **3.3+** is required.
 
-# yarn
-yarn add typedsv
+```
+npm install typedsv --save
+```
+
+You may also need to install the `reflect-metadata` library and import it at high level (typically your main entrypoint):
+
+```
+npm install reflect-metadata --save
+```
+
+```typescript
+// index.ts
+
+import 'reflect-metadata'
+```
+
+Update your `tsconfig.json` to enable decorator and metadata support:
+
+```
+{
+    "compilerOptions": {
+        "lib": [
+          "es6",
+          ...
+        ],
+        "target": "es5",
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
+        ...
+    }
+}
 ```
 
 ## Getting Started
@@ -265,7 +292,7 @@ parser.parse(input, { range: { start: 2 } }) // object form
 ]
 ```
 
-Set the end line:
+Setting the ending line:
 
 ```
 1,"John","Doe"
@@ -279,7 +306,7 @@ parser.parse(input, { range: [, 3] }) // array form, remember to include the com
 parser.parse(input, { range: { end: 3 } }) // object form
 ```
 
-> **NOTE** the ending line is _exclusive_!
+> **NOTE** The ending line argument is _exclusive_.
 
 ```
 [
@@ -288,7 +315,7 @@ parser.parse(input, { range: { end: 3 } }) // object form
 ]
 ```
 
-Or parse a range of lines:
+Parse a range of lines:
 
 ```
 1,"John","Doe"
@@ -317,44 +344,70 @@ The `@Parsed` decorator dictates how the `Parser` should maps values to properti
 
 Pass an integer `number` or `{ index: number }` to specify which column to map based on its index:
 
+```
+"foo","bar"
+```
+
 ```typescript
-// "foo","bar",...
+class ExampleWithIndex {
+  @Parsed(0)
+  first: string
 
-@Parsed(0)
-first: string // 'foo'
+  @Parsed({ index: 1 })
+  second: string
+}
 
-@Parsed({ index: 1 })
-second: string // 'bar'
+const parser = new Parser(ExampleWithIndex)
+parser.parse(...)
+```
+
+```
+ExampleWithIndex[
+  ExampleWithIndex{ first: 'foo', second: 'bar' }
+]
 ```
 
 ### Mapping by Header
 
-Pass a `string` or `{ header: string }` to specify which column to map based on its header. It is required that `{ header: true }` is used when calling `Parser#parse` and the header is on the first line of the input:
+Pass a `string` or `{ header: string }` to specify which column to map based on its header.
+
+> **NOTE** It is required that `{ header: true }` is used when calling `Parser#parse` and the header is on the first line of the input:
+
+```
+"A","B
+"foo","bar"
+```
 
 ```typescript
-// A,B,C
-// "foo","bar","baz
+class ExampleWithHeader {
+  @Parsed('A')
+  first: string
 
-@Parsed('A')
-first: string // 'foo'
+  @Parsed({ header: 'B' })
+  second: string
+}
 
-@Parsed({ header: 'B' })
-second: string // 'bar'
+const parser = new Parser(ExampleWithHeader)
+parser.parse(..., { header: true })
+```
 
-// ...
-
-parser.parse(..., { header: true } // REQUIRED!
+```
+ExampleWithHeader[
+  ExampleWithHeader{ first: 'foo', second: 'bar' }
+]
 ```
 
 ### Notes on Property Types
 
-While values are first parsed as a `string`, the target property's type is honored so long as the conversion is straightforward. To map something beyond a few primitives, see the [Transform](#transform) option:
+While values are first parsed as a `string`, the target property's type is honored so long as the conversion is straightforward. To map something beyond a few primitive types, see the [Transform](#transform) option:
 
 - `number`
 
-  ```typescript
-  // "123","3.14","ABC",...
+  ```
+  "123","3.14","ABC"
+  ```
 
+  ```typescript
   @Parsed(0)
   a: number // OK: 123
 
@@ -369,9 +422,11 @@ While values are first parsed as a `string`, the target property's type is honor
   Valid `true` values: `['TRUE', 'Y', 'YES', 'T', '1']`  
   Valid `false` values: `['FALSE', 'N', 'NO', 'F', '0']`
 
-  ```typescript
-  // "true","0","Y","F","NONE",...
+  ```
+  "true","0","y","F","NONE"
+  ```
 
+  ```typescript
   @Parsed(0)
   a: boolean // OK: true
 
@@ -396,9 +451,11 @@ The below options require that the `{ index: number | header: string }` argument
 
 The `transform` option takes a function of the signature `(input: string) => any` which can be used to modify the input value before it is mapped to the property:
 
-```typescript
-// "foo","B,A,R",...
+```
+"foo","B,A,R",...
+```
 
+```typescript
 @Parsed({ index: 0, transform: (input: string) => input.toUpperCase() })
 first: string // -> 'FOO'
 
@@ -408,9 +465,11 @@ second: string[] // -> ['B', 'A', 'R']
 
 While the return type is `any`, an error will be thrown if the result type is not the same - or cannot be parsed - as the property type as detailed in [Property Types](#property-types):
 
-```typescript
-// "foo","B,A,R",...
+```
+"foo","B,A,R",...
+```
 
+```typescript
 @Parsed({ index: 0, transform: (input: string) => `${input.length}` })
 first: number // OK as '3' will be parsed to 3
 
@@ -424,11 +483,13 @@ Value validation can be performed before the property is set by using the `valid
 
 The option accepts a few different value types but the main idea is that the function(s) take the form `(input) => bool` where a return value of `true` means the value is valid.
 
-> **NOTE** the `validate` functions are called _after_ the optional `transform` function.
+> **NOTE** The `validate` functions are called _after_ the optional `transform` function.
+
+```
+0,"John","Doe"
+```
 
 ```typescript
-// 0,"John","Doe"
-
 @Parsed({
   index: 0,
   validate: (id: number) => id > 0
@@ -440,23 +501,27 @@ id: number
 
 The default error message just takes the form of `validate.${index}` where `index` is the position of the validation function that failed. To provide a custom message use the `object` form with the `message` option:
 
-```typescript
-// 0,"John","Doe"
+```
+0,"John","Doe"
+```
 
+```typescript
 @Parsed({
   index: 0,
   validate: { message: 'id must be > 0', function: (id: number) => id > 0 }
 })
-id: number;
+id: number
 
 // Validation failed for property id: ['id must be > 0']
 ```
 
 Multiple objects/functions can also be passed as in an array. They are executed in order until either all pass or there is an error:
 
-```typescript
-// 1,"John","Doe"
+```
+1,"John","Doe"
+```
 
+```typescript
 @Parsed({
   index: 0,
   validate: [
@@ -465,16 +530,18 @@ Multiple objects/functions can also be passed as in an array. They are executed 
     { message: 'id cannot be 1', function: (id: number) => id !== 1 } // will not run
   ]
 })
-id: number;
+id: number
 
 // Validation failed for property id: ['validate.1']
 ```
 
 In case you want to collect all validation errors, use the `object` form with the `aggregate` and `functions` options:
 
-```typescript
-// 1,"John","Doe"
+```
+1,"John","Doe"
+```
 
+```typescript
 @Parsed({
   index: 0,
   validate: {
@@ -486,7 +553,7 @@ In case you want to collect all validation errors, use the `object` form with th
     ]
   }
 })
-id: number;
+id: number
 
 // Validation failed for property id: ['validate.0', 'id must be > 100']
 ```
