@@ -7,20 +7,15 @@
 
 - [Installation](#installation)
 - [Getting Started](#getting-started)
-- [Parser](#parser)
-  - [Parsing Data](#parsing-data)
-    - [Delimiter](#delimiter)
-    - [Quotes](#quotes)
-    - [Headers](#headers)
-    - [Comments](#comments)
-    - [Line Range](#line-range)
-- [@Parsed](#parsed)
+- [Mapping Properties with @Parsed](#mapping-properties-with-parsed)
   - [Mapping by Index](#mapping-by-index)
   - [Mapping by Header](#mapping-by-header)
+  - [Mapping by Index and/or Header](#mapping-by-index-andor-header)
   - [A Note on Property Types](#a-note-on-property-types)
-  - [Additional Options](#additional-options)
-    - [Transform](#transform)
-    - [Validate](#validate)
+  - [Options](#options)
+- [Parser](#parser)
+  - [Comments](#comments)
+  - [Options](#parser-options)
 
 ## Installation
 
@@ -114,231 +109,7 @@ Example[
 ]
 ```
 
-## Parser
-
-The `Parser` constructor expects a type/class that has at least one property with a valid `@Parsed` decorator.
-
-```typescript
-export default class Example {
-  @Parsed(0)
-  one: string
-}
-
-const parser = new Parser(Example)
-```
-
-An error will be thrown when attempting to create a `Parser` with a type that does not have any decorated properties.
-
-### Parsing Data
-
-The first argument of `Parser#parse` expects one of the following:
-
-- `string`  
-  A complete, delimited input.
-  ```typescript
-  const input = `
-  "1","John","Doe"
-  "2","Jane","Doe"
-  "3","Matt","Smith"
-  `
-  ```
-- `Buffer`
-  ```typescript
-  const input = Buffer.from(`
-  "1","John","Doe"
-  "2","Jane","Doe"
-  "3","Matt","Smith"
-  `)
-  ```
-- `Readable`  
-  Typically, something like a `ReadStream`.
-  ```typescript
-  const input = createReadStream('/tmp/data.csv')
-  ```
-
-The input is assumed to be formatted where each line is considered a single record. A line is then separated by a delimiter to represent a column/field value. Most of the examples in this document make use of the common CSV (comma-separated value) format:
-
-```
-"1","John","Doe"
-"2","Jane","Doe"
-"3","Matt","Smith"
-...
-```
-
-While TypeDSV implements [RFC4180](https://tools.ietf.org/html/rfc4180) , the `Parser` accepts a variety of options to accomodate data that may not follow that of a typical CSV.
-
-#### Delimiter
-
-The default delimiter/separator is `,` (comma):
-
-```
-"1","John","Doe"
-```
-
-This can be changed using the `{ delimiter: string }` option:
-
-```typescript
-const input = '"1"|"John"|"Doe"'
-parser.parse(input, { delimiter: '|' })
-```
-
-#### Quotes
-
-The default quote character is `"` (double quote):
-
-```
-"1","John","Doe"
-```
-
-This can be changed using the `{ quote: string }` option:
-
-```typescript
-const input = '~1~,~John~,~Doe~'
-parser.parse(input, { quote: '~' })
-```
-
-Values do not have to be wrapped in quote characters although there are some exceptions as listed below:
-
-```
-"1","John","Doe"          # OK
-2,Jane,Doe                # OK
-3,"Matt",Smith            # OK
-```
-
-Values that contain a carriage return (default: `\r`), new line (default: `\n`), the delimiter (default: `,`), or comment (default: `#`) must be wrapped in the quote character:
-
-```
-# OK
-1,John,"Do\re"
-2,Jane,"Do\ne"
-3,Matt,"Smi,th"
-4,Megan,"Smi#th"
-
-# NOT OK
-1,John,Do\re
-2,Jane,Do\ne
-3,Matt,Smi,th
-4,Megan,Smi#th
-```
-
-If a quoted value contains the quote character (default: `"`) then it must be escaped by a preceeding quote character:
-
-```
-1,John,"said ""Hi!"""     # OK
-2,Jane,"said "Hi!""       # NOT OK
-```
-
-Non-quoted values can contain the quote character without the escaping:
-
-```
-1,John,said "Hi!"         # OK
-```
-
-#### Headers
-
-If the first line of the input declares the value/field names then use the `{ header: true }` option.
-
-```
-"ID","FirstName","LastName"
-"1","John","Doe"
-```
-
-```typescript
-parser.parse(input, { header: true })
-```
-
-This option also enables the ability to map properties by the headers instead of by index as described in [Header-based Mapping](#header-based-mapping).
-
-#### Comments
-
-Lines that begin with the comment character (default: `#`) are skipped:
-
-```
-"ID","FirstName","LastName"
-"1","John","Doe"
-# this comment will be skipped
-"2","Jane","Doe"
-"3","Matt","Smith"
-```
-
-If a line ends with an inline comment, the line is parsed up until the comment:
-
-```
-"ID","FirstName","LastName"
-"1","John","Doe"
-"2","Jane","Doe" # this line is parsed up to this comment
-"3","Matt","Smith"
-```
-
-#### Line Range
-
-The `{ range: [number?, number?] | { start?: number, end?: number } }` option can be used to set the start line:
-
-```
-1,"John","Doe"
-2,"Jane","Doe"
-3,"Matt","Smith"
-4,"Megan","Smith"
-```
-
-```typescript
-parser.parse(input, { range: [2] }) // array form
-parser.parse(input, { range: { start: 2 } }) // object form
-```
-
-```
-[
-  ['2', 'Jane', 'Doe'],
-  ['3', 'Matt', 'Smith'],
-  ['4', 'Megan', 'Smith']
-]
-```
-
-Setting the ending line:
-
-```
-1,"John","Doe"
-2,"Jane","Doe"
-3,"Matt","Smith"
-4,"Megan","Smith"
-```
-
-```typescript
-parser.parse(input, { range: [, 3] }) // array form, remember to include the comma!
-parser.parse(input, { range: { end: 3 } }) // object form
-```
-
-> **NOTE** The ending line argument is _exclusive_.
-
-```
-[
-  ['1', 'John', 'Doe'],
-  ['2', 'Jane', 'Doe']
-]
-```
-
-Parse a range of lines:
-
-```
-1,"John","Doe"
-2,"Jane","Doe"
-3,"Matt","Smith"
-4,"Megan","Smith"
-```
-
-```typescript
-parser.parse(input, { range: [2, 4] }) // array form
-parser.parse(input, { range: { start: 2, end: 4 } }) // object form
-```
-
-```
-[
-  ['2', 'Jane', 'Doe'],
-  ['3', 'Matt', 'Smith']
-]
-```
-
-## @Parsed
+## Mapping Properties with @Parsed
 
 The `@Parsed` decorator dictates how the `Parser` should maps values to properties within a class.
 
@@ -390,7 +161,7 @@ class ExampleWithHeader {
 }
 
 const parser = new Parser(ExampleWithHeader)
-parser.parse(..., { header: true })
+parser.parse(input { header: true })
 ```
 
 ```
@@ -421,7 +192,7 @@ class ExampleWithHeaderAndIndex {
 }
 
 const parser = new Parser(ExampleWithHeaderAndIndex)
-parser.parse(..., { header: true })
+parser.parse(input, { header: true })
 ```
 
 ```
@@ -476,13 +247,14 @@ While values are first parsed as a `string`, the target property's type is honor
   e: boolean // ERROR: 'NONE' cannot be parsed as a boolean
   ```
 
-### Additional Options
+### Options
 
 The below options require that the `{ index: number | header: string }` argument form detailed above is used.
 
-#### Transform
+`transform`  
+Type: `(input: string) => any`
 
-The `transform` option takes a function of the signature `(input: string) => any` which can be used to modify the input value before it is mapped to the property:
+Modify the input value before it is mapped to the property:
 
 ```
 "foo","F,O,O",1
@@ -552,11 +324,12 @@ class ExampleWithBadTransform {
 ERROR Cannot set ExampleWithBadTransform.second: Array is not assignable to String
 ```
 
-#### Validate
+`validate`  
+Type: `(input: any) => boolean | { function: (input: any) => boolean; message?: string } | [...]`
 
-Value validation can be performed before the property is set by using the `validate` option.
+Validation to be performed before the property is set.
 
-The option accepts a few different value types but the main idea is that the function(s) take the form `(input) => bool` where a return value of `true` means the value is valid.
+The option accepts a few different value types but the main idea is that the function(s) take the form `(input: any) => bool` where a return value of `true` means the value is valid.
 
 > **NOTE** The `validate` functions are called _after_ the optional `transform` function.
 
@@ -650,4 +423,215 @@ class ExampleWithAggregatedValidationErrors {
 
 ```
 ERROR Validation failed for property id: ['validate.0', 'id must be > 100']
+```
+
+## Parser
+
+The `Parser` constructor expects a type/class that has at least one property with a valid `@Parsed` decorator.
+
+```typescript
+export default class Example {
+  @Parsed(0)
+  one: string
+}
+
+const parser = new Parser(Example)
+```
+
+An error will be thrown when attempting to create a `Parser` with a type that does not have any decorated properties.
+
+The first argument of `Parser#parse` expects one of the following:
+
+- `string`  
+  A complete, delimited input.
+  ```typescript
+  const input = `
+  "1","John","Doe"
+  "2","Jane","Doe"
+  "3","Matt","Smith"
+  `
+  ```
+- `Buffer`
+  ```typescript
+  const input = Buffer.from(`
+  "1","John","Doe"
+  "2","Jane","Doe"
+  "3","Matt","Smith"
+  `)
+  ```
+- `Readable`  
+  Typically something like a `ReadStream`.
+  ```typescript
+  const input = createReadStream('/tmp/data.csv')
+  ```
+
+The input is assumed to be formatted where each line is considered a single record. A line is then separated by a delimiter to represent a column/field value. Most of the examples in this document make use of the common CSV (comma-separated value) format:
+
+```
+"1","John","Doe"
+"2","Jane","Doe"
+"3","Matt","Smith"
+...
+```
+
+#### Comments
+
+Lines that begin with the comment character (default: `#`) are skipped:
+
+```
+"ID","FirstName","LastName"
+"1","John","Doe"
+# this comment will be skipped
+"2","Jane","Doe"
+"3","Matt","Smith"
+```
+
+If a line ends with an inline comment, the line is parsed up until the comment:
+
+```
+"ID","FirstName","LastName"
+"1","John","Doe"
+"2","Jane","Doe" # this line is parsed up to this comment
+"3","Matt","Smith"
+```
+
+### Options
+
+While TypeDSV implements [RFC4180](https://tools.ietf.org/html/rfc4180), `Parser#parse` accepts a variety of options to accomodate data that may not follow that of a typical CSV.
+
+`delimiter`  
+Type: `string`  
+Default: `,` (comma)
+
+The character that separates values in a row.
+
+```
+# default
+"1","John","Doe"
+
+# delimiter: |
+"1"|"John"|"Doe"
+
+# delimiter: \t
+"1" "John"  "Doe"
+```
+
+`quote`  
+Type: `string`  
+Default: `"` (double quote)
+
+```
+# default
+"1","John","Doe"
+
+# quote: ~
+~1~,~John~,~Doe~
+```
+
+Values do not have to be wrapped in quote characters although there are some exceptions as listed below:
+
+```
+"1","John","Doe"          # OK
+2,Jane,Doe                # OK
+3,"Matt",Smith            # OK
+```
+
+Values that contain a carriage return (default: `\r`), new line (default: `\n`), the delimiter (default: `,`), or comment (default: `#`) must be wrapped in the quote character:
+
+```
+# OK
+1,John,"Do\re"
+2,Jane,"Do\ne"
+3,Matt,"Smi,th"
+4,Megan,"Smi#th"
+
+# NOT OK
+1,John,Do\re
+2,Jane,Do\ne
+3,Matt,Smi,th
+4,Megan,Smi#th
+```
+
+If a quoted value contains the quote character (default: `"`) then it must be escaped by a preceeding quote character:
+
+```
+1,John,"said ""Hi!"""     # OK
+2,Jane,"said "Hi!""       # NOT OK
+```
+
+Non-quoted values can contain the quote character without the escaping:
+
+```
+1,John,said "Hi!"         # OK
+```
+
+`header`  
+Type: `boolean`  
+Default: `false`
+
+If the first line of the input declares the value/field names:
+
+```
+"ID","FirstName","LastName"
+"1","John","Doe"
+```
+
+This option also enables the ability to map properties by the headers instead of by index as described in [Mapping by Header](#mapping-by-header).
+
+`range`  
+Type: `[number?, number?] | { start?: number, end?: number }`  
+Default: `{ start: 1 }`
+
+Given the following input:
+
+```
+1,"John","Doe"
+2,"Jane","Doe"
+3,"Matt","Smith"
+4,"Megan","Smith"
+```
+
+Setting the start line:
+
+```typescript
+parser.parse(input, { range: [2] }) // array form
+parser.parse(input, { range: { start: 2 } }) // object form
+```
+
+```
+[
+  ['2', 'Jane', 'Doe'],
+  ['3', 'Matt', 'Smith'],
+  ['4', 'Megan', 'Smith']
+]
+```
+
+Setting the ending line:
+
+> **NOTE** The ending line argument is _exclusive_.
+
+```typescript
+parser.parse(input, { range: [, 3] }) // array form, remember to include the comma!
+parser.parse(input, { range: { end: 3 } }) // object form
+```
+
+```
+[
+  ['1', 'John', 'Doe'],
+  ['2', 'Jane', 'Doe']
+]
+```
+
+Parse a range of lines:
+
+```typescript
+parser.parse(input, { range: [2, 4] }) // array form
+parser.parse(input, { range: { start: 2, end: 4 } }) // object form
+```
+
+```
+[
+  ['2', 'Jane', 'Doe'],
+  ['3', 'Matt', 'Smith']
+]
 ```
