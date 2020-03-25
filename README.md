@@ -15,7 +15,7 @@
   - [Options](#options)
 - [Parser](#parser)
   - [Comments](#comments)
-  - [Options](#parser-options)
+  - [Options](#options-1)
 
 ## Installation
 
