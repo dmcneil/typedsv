@@ -10,6 +10,7 @@ const booleanValues = Object.freeze({
 })
 
 export class ParsedProperty {
+  type: any
   readonly name: string
   readonly options: ParsedOptions
 
@@ -28,42 +29,47 @@ export class ParsedProperty {
     }
   }
 
-  set = (target: any, dv: any): void => {
+  set = (target: any, value: any): void => {
     const { transform, validate } = this.options
-    if (transform && typeof dv === 'string') {
-      dv = transform(dv as string)
+    if (transform && typeof value === 'string') {
+      value = transform(value as string)
     }
 
     let ok = true
 
-    const targetType = Reflect.getMetadata('design:type', target, this.name)
-    if (!(dv instanceof targetType || dv.constructor === targetType)) {
-      if (typeof dv === 'string') {
-        if (targetType === Number) {
-          const num = parseFloat(dv.replace(',', ''))
+    if (!this.type) {
+      this.type = Reflect.getMetadata('design:type', target, this.name)
+    }
+
+    if (!(value instanceof this.type || value.constructor === this.type)) {
+      if (typeof value === 'string') {
+        if (this.type === Number) {
+          const num = parseFloat(value.replace(',', ''))
           if (!isNaN(num)) {
-            dv = num
+            value = num
           } else {
             ok = false
           }
-        } else if (targetType === Boolean) {
-          if (booleanValues.true.includes(dv.toUpperCase())) {
-            dv = true
-          } else if (booleanValues.false.includes(dv.toUpperCase())) {
-            dv = false
+        } else if (this.type === Boolean) {
+          if (booleanValues.true.includes(value.toUpperCase())) {
+            value = true
+          } else if (booleanValues.false.includes(value.toUpperCase())) {
+            value = false
           } else {
             ok = false
           }
         }
+      } else {
+        ok = false
       }
     }
 
     if (validate) {
-      this.validate(dv, validate as ValidateOptions)
+      this.validate(value, validate as ValidateOptions)
     }
 
-    if (!ok || !Reflect.set(target, this.name, dv)) {
-      throw new InvalidPropertyTypeError(targetType, this, dv)
+    if (!ok || !Reflect.set(target, this.name, value)) {
+      throw new InvalidPropertyTypeError(target, this, value)
     }
   }
 

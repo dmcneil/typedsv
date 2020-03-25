@@ -67,6 +67,41 @@ describe('ParsedProperty', () => {
           expect(data.got).toEqual(t.expected)
         })
       })
+
+      it('should throw an error on invalid property types', () => {
+        type test = { input: any; expected: string }
+
+        const tests: test[] = [
+          {
+            input: ['A', 'B', 'C'],
+            expected: 'Cannot set Data.got: Array is not assignable to String'
+          },
+          {
+            input: 1,
+            expected: 'Cannot set Data.got: Number is not assignable to String'
+          },
+          {
+            input: true,
+            expected: 'Cannot set Data.got: Boolean is not assignable to String'
+          },
+          {
+            input: {},
+            expected: 'Cannot set Data.got: Object is not assignable to String'
+          }
+        ]
+
+        class Data {
+          @Parsed(0)
+          got: string
+        }
+
+        const parsedProperty = new ParsedProperty('got')
+
+        tests.forEach((t: test) => {
+          const data = new Data()
+          expect(() => parsedProperty.set(data, t.input)).toThrowError(t.expected)
+        })
+      })
     })
   })
 

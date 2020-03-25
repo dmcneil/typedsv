@@ -8,14 +8,16 @@
 - [Installation](#installation)
 - [Getting Started](#getting-started)
 - [Parser](#parser)
-  - [Reading Data](#reading-data)
+  - [Parsing Data](#parsing-data)
     - [Delimiter](#delimiter)
     - [Quotes](#quotes)
     - [Headers](#headers)
+    - [Comments](#comments)
+    - [Line Range](#line-range)
 - [@Parsed](#parsed)
   - [Mapping by Index](#mapping-by-index)
   - [Mapping by Header](#mapping-by-header)
-  - [Notes on Property Types](#notes-on-property-types)
+  - [A Note on Property Types](#a-note-on-property-types)
   - [Additional Options](#additional-options)
     - [Transform](#transform)
     - [Validate](#validate)
@@ -37,12 +39,10 @@ npm install reflect-metadata --save
 ```
 
 ```typescript
-// index.ts
-
 import 'reflect-metadata'
 ```
 
-Update your `tsconfig.json` to enable decorator and metadata support:
+Enable decorator and metadata support in `tsconfig.json`:
 
 ```
 {
@@ -61,7 +61,7 @@ Update your `tsconfig.json` to enable decorator and metadata support:
 
 ## Getting Started
 
-Given a delimiter-separated file (`csv`, `tsv`, etc.):
+Given delimiter-separated data (`csv`, `tsv`, etc.):
 
 ```
 # example.csv
@@ -129,7 +129,7 @@ const parser = new Parser(Example)
 
 An error will be thrown when attempting to create a `Parser` with a type that does not have any decorated properties.
 
-### Reading Data
+### Parsing Data
 
 The first argument of `Parser#parse` expects one of the following:
 
@@ -365,7 +365,7 @@ parser.parse(...)
 
 ```
 ExampleWithIndex[
-  ExampleWithIndex{ first: 'foo', second: 'bar' }
+  ExampleWithIndex{first: 'foo', second: 'bar'}
 ]
 ```
 
@@ -376,7 +376,7 @@ Pass a `string` or `{ header: string }` to specify which column to map based on 
 > **NOTE** It is required that `{ header: true }` is used when calling `Parser#parse` and the header is on the first line of the input:
 
 ```
-"A","B
+"A","B"
 "foo","bar"
 ```
 
@@ -395,11 +395,42 @@ parser.parse(..., { header: true })
 
 ```
 ExampleWithHeader[
-  ExampleWithHeader{ first: 'foo', second: 'bar' }
+  ExampleWithHeader{first: 'foo', second: 'bar'}
 ]
 ```
 
-### Notes on Property Types
+### Mapping by Index and/or Header
+
+Finally, both the `{ index: number }` and `{ header: string }` options can be used together. The `Parser` will first try to map a property using the declared header then fallback to the index.
+
+```
+"A","B","C"
+"foo","bar","baz"
+```
+
+```typescript
+class ExampleWithHeaderAndIndex {
+  @Parsed('A')
+  first: string
+
+  @Parsed({ header: 'C', index: 1 })
+  second: string
+
+  @Parsed(2)
+  third: string
+}
+
+const parser = new Parser(ExampleWithHeaderAndIndex)
+parser.parse(..., { header: true })
+```
+
+```
+ExampleWithHeaderAndIndex[
+  ExampleWithHeaderAndIndex{first: 'foo', second: 'bar', third: 'baz'}
+]
+```
+
+### A Note on Property Types
 
 While values are first parsed as a `string`, the target property's type is honored so long as the conversion is straightforward. To map something beyond a few primitive types, see the [Transform](#transform) option:
 
@@ -454,29 +485,71 @@ The below options require that the `{ index: number | header: string }` argument
 The `transform` option takes a function of the signature `(input: string) => any` which can be used to modify the input value before it is mapped to the property:
 
 ```
-"foo","B,A,R",...
+"foo","F,O,O",1
+"bar","B,A,R",2
+"baz","B,A,Z",3
 ```
 
 ```typescript
-@Parsed({ index: 0, transform: (input: string) => input.toUpperCase() })
-first: string // -> 'FOO'
+class ExampleWithTransform {
+  @Parsed({
+    index: 0,
+    transform: (input: string) => input.toUpperCase()
+  })
+  first: string
 
-@Parsed({ index: 1, transform: (input: string) => input.split(',') })
-second: string[] // -> ['B', 'A', 'R']
+  @Parsed({
+    index: 1,
+    transform: (input: string) => input.split(',')
+  })
+  second: string[]
+
+   @Parsed({
+    index: 2,
+    transform: (input: string) => {
+      const n = parseInt(input)
+      return n * n
+    }
+  })
+  third: number
+}
+
+const parser = new Parser(ExampleWithTransform)
+parser.parse(...)
 ```
 
-While the return type is `any`, an error will be thrown if the result type is not the same - or cannot be parsed - as the property type as detailed in [Property Types](#property-types):
+```
+ExampleWithTransform[
+  ExampleWithTransform{first: 'FOO', second: ['F', 'O', 'O'], third: 1},
+  ExampleWithTransform{first: 'BAR', second: ['B', 'A', 'R'], third: 4},
+  ExampleWithTransform{first: 'BAZ', second: ['B', 'A', 'Z'], third: 9}
+]
+```
+
+While the function return type is `any`, an error will be thrown if the type is not the same - or cannot be parsed - as the property type as detailed in [A Note on Property Types](#a-note-on-property-types):
 
 ```
-"foo","B,A,R",...
+"foo","B,A,R"
 ```
 
 ```typescript
-@Parsed({ index: 0, transform: (input: string) => `${input.length}` })
-first: number // OK as '3' will be parsed to 3
+class ExampleWithBadTransform {
+  @Parsed({
+    index: 0,
+    transform: (input: string) => `${input.length}`
+  })
+  first: number
 
-@Parsed({ index: 1, transform: (input: string) => input.split(',') })
-second: string // ERROR as ['B', 'A', 'R'] is not clearly intentional to be a string.
+  @Parsed({
+    index: 1,
+    transform: (input: string) => input.split(',')
+  })
+  second: string
+}
+```
+
+```
+ERROR Cannot set ExampleWithBadTransform.second: Array is not assignable to String
 ```
 
 #### Validate
@@ -492,13 +565,17 @@ The option accepts a few different value types but the main idea is that the fun
 ```
 
 ```typescript
-@Parsed({
-  index: 0,
-  validate: (id: number) => id > 0
-})
-id: number
+class ExampleWithValidation {
+  @Parsed({
+    index: 0,
+    validate: (id: number) => id > 0
+  })
+  id: number
+}
+```
 
-// Validation failed for property id: ['validate.0']
+```
+ERROR Validation failed for property id: ['validate.0']
 ```
 
 The default error message just takes the form of `validate.${index}` where `index` is the position of the validation function that failed. To provide a custom message use the `object` form with the `message` option:
@@ -508,13 +585,20 @@ The default error message just takes the form of `validate.${index}` where `inde
 ```
 
 ```typescript
-@Parsed({
-  index: 0,
-  validate: { message: 'id must be > 0', function: (id: number) => id > 0 }
-})
-id: number
+class ExampleWithValidationMessage {
+  @Parsed({
+    index: 0,
+    validate: {
+      message: 'id must be > 0',
+      function: (id: number) => id > 0
+    }
+  })
+  id: number
+}
+```
 
-// Validation failed for property id: ['id must be > 0']
+```
+ERROR Validation failed for property id: ['id must be > 0']
 ```
 
 Multiple objects/functions can also be passed as in an array. They are executed in order until either all pass or there is an error:
@@ -524,17 +608,21 @@ Multiple objects/functions can also be passed as in an array. They are executed 
 ```
 
 ```typescript
-@Parsed({
-  index: 0,
-  validate: [
-    (id: number) => id > 0,
-    (id: number) => id > 50,
-    { message: 'id cannot be 1', function: (id: number) => id !== 1 } // will not run
-  ]
-})
-id: number
+class ExampleWithMultipleValidations {
+  @Parsed({
+    index: 0,
+    validate: [
+      (id: number) => id > 0,
+      (id: number) => id > 50,
+      { message: 'id cannot be 1', function: (id: number) => id !== 1 } // will not run
+    ]
+  })
+  id: number
+}
+```
 
-// Validation failed for property id: ['validate.1']
+```
+ERROR Validation failed for property id: ['validate.1']
 ```
 
 In case you want to collect all validation errors, use the `object` form with the `aggregate` and `functions` options:
@@ -544,18 +632,22 @@ In case you want to collect all validation errors, use the `object` form with th
 ```
 
 ```typescript
-@Parsed({
-  index: 0,
-  validate: {
-    aggregate: true,
-    functions: [
-      (id: number) => id > 50,
-      { message: 'id must be > 100', function: (id: number) => id > 100 },
-      (id: number) => id !== 0  // will still run even though the validation has failed
-    ]
-  }
-})
-id: number
+class ExampleWithAggregatedValidationErrors {
+  @Parsed({
+    index: 0,
+    validate: {
+      aggregate: true,
+      functions: [
+        (id: number) => id > 50,
+        { message: 'id must be > 100', function: (id: number) => id > 100 },
+        (id: number) => id !== 0 // will still run even though the validation has failed
+      ]
+    }
+  })
+  id: number
+}
+```
 
-// Validation failed for property id: ['validate.0', 'id must be > 100']
+```
+ERROR Validation failed for property id: ['validate.0', 'id must be > 100']
 ```
