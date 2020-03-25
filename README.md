@@ -258,6 +258,7 @@ While values are first parsed as a `string`, the target property's type is honor
 > **NOTE** The below options require that the `{ index: number | header: string }` argument form detailed above is used.
 
 #### transform
+
 Type: `(input: string) => any`
 
 Modify the input value before it is mapped to the property:
@@ -282,7 +283,7 @@ class ExampleWithTransform {
   })
   second: string[]
 
-   @Parsed({
+  @Parsed({
     index: 2,
     transform: (input: string) => {
       const n = parseInt(input)
@@ -331,6 +332,7 @@ ERROR Cannot set ExampleWithBadTransform.second: Array is not assignable to Stri
 ```
 
 #### validate
+
 Type: `(input: any) => boolean | { function: (input: any) => boolean; message?: string } | [...]`
 
 Validation to be performed before the property is set.
@@ -506,6 +508,7 @@ If a line ends with an inline comment, the line is parsed up until the comment:
 While TypeDSV implements [RFC4180](https://tools.ietf.org/html/rfc4180), `Parser#parse` accepts a variety of options to accomodate data that may not follow that of a typical CSV.
 
 #### delimiter
+
 Type: `string`  
 Default: `,` (comma)
 
@@ -523,6 +526,7 @@ The character that separates values in a row.
 ```
 
 #### quote
+
 Type: `string`  
 Default: `"` (double quote)
 
@@ -572,6 +576,7 @@ Non-quoted values can contain the quote character without the escaping:
 ```
 
 #### header
+
 Type: `boolean`  
 Default: `false`
 
@@ -585,6 +590,7 @@ If the first line of the input declares the value/field names:
 This option also enables the ability to map properties by the headers instead of by index as described in [Mapping by Header](#mapping-by-header).
 
 #### range
+
 Type: `[number?, number?] | { start?: number, end?: number }`  
 Default: `{ start: 1 }`
 
