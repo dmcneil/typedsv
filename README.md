@@ -13,13 +13,19 @@
   - [Mapping by Index and/or Header](#mapping-by-index-andor-header)
   - [A Note on Property Types](#a-note-on-property-types)
   - [Options](#options)
+    - [transform](#transform)
+    - [validate](#validate)
 - [Parser](#parser)
   - [Comments](#comments)
   - [Options](#options-1)
+    - [delimiter](#delimiter)
+    - [quote](#quote)
+    - [header](#header)
+    - [range](#range)
 
 ## Installation
 
-> **NOTE** TypeScript **3.3+** is required.
+> **NOTE** TypeScript **3.2+** is required.
 
 Install the package:
 
@@ -249,9 +255,9 @@ While values are first parsed as a `string`, the target property's type is honor
 
 ### Options
 
-The below options require that the `{ index: number | header: string }` argument form detailed above is used.
+> **NOTE** The below options require that the `{ index: number | header: string }` argument form detailed above is used.
 
-`transform`  
+#### transform
 Type: `(input: string) => any`
 
 Modify the input value before it is mapped to the property:
@@ -324,7 +330,7 @@ class ExampleWithBadTransform {
 ERROR Cannot set ExampleWithBadTransform.second: Array is not assignable to String
 ```
 
-`validate`  
+#### validate
 Type: `(input: any) => boolean | { function: (input: any) => boolean; message?: string } | [...]`
 
 Validation to be performed before the property is set.
@@ -499,7 +505,7 @@ If a line ends with an inline comment, the line is parsed up until the comment:
 
 While TypeDSV implements [RFC4180](https://tools.ietf.org/html/rfc4180), `Parser#parse` accepts a variety of options to accomodate data that may not follow that of a typical CSV.
 
-`delimiter`  
+#### delimiter
 Type: `string`  
 Default: `,` (comma)
 
@@ -516,7 +522,7 @@ The character that separates values in a row.
 "1" "John"  "Doe"
 ```
 
-`quote`  
+#### quote
 Type: `string`  
 Default: `"` (double quote)
 
@@ -565,7 +571,7 @@ Non-quoted values can contain the quote character without the escaping:
 1,John,said "Hi!"         # OK
 ```
 
-`header`  
+#### header
 Type: `boolean`  
 Default: `false`
 
@@ -578,7 +584,7 @@ If the first line of the input declares the value/field names:
 
 This option also enables the ability to map properties by the headers instead of by index as described in [Mapping by Header](#mapping-by-header).
 
-`range`  
+#### range
 Type: `[number?, number?] | { start?: number, end?: number }`  
 Default: `{ start: 1 }`
 
