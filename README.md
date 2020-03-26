@@ -202,7 +202,7 @@ ExampleWithHeaderAndIndex[
 
 While values are first parsed as a `string`, the target property's type is honored so long as the conversion is straightforward. To map something beyond a few primitive types, see the [Transform](#transform) option:
 
-#### number
+#### `number`
 
 ```
 "123","3.14","ABC"
@@ -219,7 +219,7 @@ b: number // OK: 3.14
 c: number // ERROR: 'ABC' cannot be parsed as a number
 ```
 
-#### boolean
+#### `boolean`
 
 | Valid Values | (case insensitive)           |
 | ------------ | ---------------------------- |
@@ -251,7 +251,7 @@ e: boolean // ERROR: 'NONE' cannot be parsed as a boolean
 
 > **NOTE** The below options require that the `{ index: number | header: string }` argument form detailed above is used.
 
-#### transform
+#### `transform`
 
 Type: `(input: string) => any`
 
@@ -325,7 +325,7 @@ class ExampleWithBadTransform {
 ERROR Cannot set ExampleWithBadTransform.second: Array is not assignable to String
 ```
 
-#### validate
+#### `validate`
 
 Type: `(input: any) => boolean | { function: (input: any) => boolean; message?: string } | [...]`
 
@@ -440,32 +440,19 @@ export default class Example {
 const parser = new Parser(Example)
 ```
 
-An error will be thrown when attempting to create a `Parser` with a type that does not have any decorated properties.
+> **NOTE** An error will be thrown when attempting to create a `Parser` with a type that does not have any decorated properties.
 
-The first argument of `Parser#parse` expects one of the following:
+Once a `Parser` is created, simply call the `parse` function with an input and any [options](#options-1):
 
-- `string`  
-  A complete, delimited input.
-  ```typescript
-  const input = `
-  "1","John","Doe"
-  "2","Jane","Doe"
-  "3","Matt","Smith"
-  `
-  ```
-- `Buffer`
-  ```typescript
-  const input = Buffer.from(`
-  "1","John","Doe"
-  "2","Jane","Doe"
-  "3","Matt","Smith"
-  `)
-  ```
-- `Readable`  
-  Typically something like a `ReadStream`.
-  ```typescript
-  const input = createReadStream('/tmp/data.csv')
-  ```
+```typescript
+parser.parse(input, { ... })
+  .then((examples: Example[]) => ...)
+
+// ...or using an async function
+(async () => {
+  const examples = await parser.parse(input, { ... })
+})()
+```
 
 The input is assumed to be formatted where each line is considered a single record. A line is then separated by a delimiter to represent a column/field value. Most of the examples in this document make use of the common CSV (comma-separated value) format:
 
@@ -474,6 +461,38 @@ The input is assumed to be formatted where each line is considered a single reco
 "2","Jane","Doe"
 "3","Matt","Smith"
 ...
+```
+
+The input can be passed as the first argument to `parse` in a few different forms:
+
+#### `string`
+
+A complete, delimited input.
+
+```typescript
+const input = `
+"1","John","Doe"
+"2","Jane","Doe"
+"3","Matt","Smith"
+`
+```
+
+#### `Buffer`
+
+```typescript
+const input = Buffer.from(`
+"1","John","Doe"
+"2","Jane","Doe"
+"3","Matt","Smith"
+`)
+```
+
+#### `Readable`
+
+Typically the most common method by reading a file into a `ReadStream`.
+
+```typescript
+const input = createReadStream('/tmp/data.csv')
 ```
 
 #### Comments
@@ -501,7 +520,7 @@ If a line ends with an inline comment, the line is parsed up until the comment:
 
 While TypeDSV implements [RFC4180](https://tools.ietf.org/html/rfc4180), `Parser#parse` accepts a variety of options to accomodate data that may not follow that of a typical CSV.
 
-#### delimiter
+#### `delimiter`
 
 Type: `string`  
 Default: `,` (comma)
@@ -519,7 +538,7 @@ The character that separates values in a row.
 "1" "John"  "Doe"
 ```
 
-#### quote
+#### `quote`
 
 Type: `string`  
 Default: `"` (double quote)
@@ -569,7 +588,7 @@ Non-quoted values can contain the quote character without the escaping:
 1,John,said "Hi!"         # OK
 ```
 
-#### header
+#### `header`
 
 Type: `boolean`  
 Default: `false`
