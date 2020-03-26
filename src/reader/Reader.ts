@@ -1,5 +1,5 @@
 import { Readable } from 'stream'
-import { Input } from './Input'
+import { InputType } from '../common/InputType'
 
 interface Range {
   start?: number
@@ -93,7 +93,7 @@ export class Reader {
     this.result = { headers: [], rows: [] }
   }
 
-  read(input: Input): Promise<ReaderResult> {
+  read(input: InputType): Promise<ReaderResult> {
     this.reset()
 
     if (input instanceof Readable) {

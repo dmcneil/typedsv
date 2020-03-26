@@ -1,8 +1,8 @@
 import { ConstructableType } from '../common/ConstructableType'
+import { InputType } from '../common/InputType'
 import { ParsedProperty } from '../metadata/ParsedProperty'
 import { getStore } from '../metadata/Store'
-import { Input } from './Input'
-import { Reader, ReaderOptions } from './Reader'
+import { Reader, ReaderOptions } from '../reader/Reader'
 
 type ParserOptions = {} & ReaderOptions
 
@@ -15,7 +15,7 @@ export class Parser<T> {
     this.properties = getStore().getParsed(this.type)
   }
 
-  parse = (input: Input, options?: ParserOptions): Promise<T[]> => {
+  parse = (input: InputType, options?: ParserOptions): Promise<T[]> => {
     const objects: T[] = []
     const reader = new Reader(options)
 
