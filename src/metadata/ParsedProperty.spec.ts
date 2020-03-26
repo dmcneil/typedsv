@@ -29,6 +29,20 @@ describe('ParsedProperty', () => {
         })
       })
 
+      it('should throw an error on invalid numbers', () => {
+        class Data {
+          @Parsed(0)
+          got: number
+        }
+
+        const data = new Data()
+        const parsedProperty = new ParsedProperty('got')
+
+        expect(() => parsedProperty.set(data, 'ABC')).toThrowError(
+          'Cannot set Data.got: String is not assignable to Number'
+        )
+      })
+
       it('should convert boolean-like values', async () => {
         type test = { input: string; expected: boolean }
 
@@ -68,6 +82,20 @@ describe('ParsedProperty', () => {
         })
       })
 
+      it('should throw an error on invalid booleans', () => {
+        class Data {
+          @Parsed(0)
+          got: boolean
+        }
+
+        const data = new Data()
+        const parsedProperty = new ParsedProperty('got')
+
+        expect(() => parsedProperty.set(data, 'ABC')).toThrowError(
+          'Cannot set Data.got: String is not assignable to Boolean'
+        )
+      })
+
       it('should throw an error on invalid property types', () => {
         type test = { input: any; expected: string }
 
@@ -102,6 +130,24 @@ describe('ParsedProperty', () => {
           expect(() => parsedProperty.set(data, t.input)).toThrowError(t.expected)
         })
       })
+    })
+  })
+
+  describe('transform', () => {
+    it('should throw an error if the result type mismatches the property type', () => {
+      class Data {
+        @Parsed({
+          index: 0
+        })
+        got: string
+      }
+
+      const data = new Data()
+      const parsedProperty = new ParsedProperty('got', {
+        transform: input => 1
+      })
+
+      expect(() => parsedProperty.set(data, '')).toThrowError('Cannot set Data.got: Number is not assignable to String')
     })
   })
 

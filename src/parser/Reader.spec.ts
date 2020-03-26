@@ -192,6 +192,17 @@ bar",654,E,Foo,
     })
   })
 
+  it('should allow an escape character that is different from the quote', async () => {
+    const data = `1,A,123,"~"B~"","Fo,o"`
+    const reader = new Reader({ escape: '~' })
+    const lines = await reader.read(data)
+
+    expect(lines).toEqual({
+      headers: [],
+      rows: [['1', 'A', '123', '"B"', 'Fo,o']]
+    })
+  })
+
   it('should allow empty cells', async () => {
     const data = `
 1,A,123,"",Fo"o,""
