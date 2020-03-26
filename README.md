@@ -1,6 +1,6 @@
 <div align="center" style="margin-top: 0.5em">
 	<img src="logo.png" alt="typedsv">
-  <div><i>Parse and map delimiter-separated values to your objects!</i></div>
+  <div><i>Parse and map delimiter-separated values to your classes!</i></div>
 </div>
 
 ## Table of Contents
@@ -8,9 +8,6 @@
 - [Installation](#installation)
 - [Getting Started](#getting-started)
 - [Mapping Properties with @Parsed](#mapping-properties-with-parsed)
-  - [Mapping by Index](#mapping-by-index)
-  - [Mapping by Header](#mapping-by-header)
-  - [Mapping by Index and/or Header](#mapping-by-index-andor-header)
   - [A Note on Property Types](#a-note-on-property-types)
   - [Options](#options)
     - [transform](#transform)
@@ -33,7 +30,7 @@ Install the package:
 npm install typedsv --save
 ```
 
-You may also need to install the `reflect-metadata` library and import it at high level (typically your main entrypoint):
+You may also need to install the `reflect-metadata` library and import it at high level (typically your application entrypoint):
 
 ```
 npm install reflect-metadata --save
@@ -119,9 +116,7 @@ Example[
 
 The `@Parsed` decorator dictates how the `Parser` should maps values to properties within a class.
 
-### Mapping by Index
-
-Pass an integer `number` or `{ index: number }` to specify which column to map based on its index:
+Pass a `number` or `{ index: number }` to specify which column to map based on its index:
 
 ```
 "foo","bar"
@@ -146,9 +141,7 @@ ExampleWithIndex[
 ]
 ```
 
-### Mapping by Header
-
-Pass a `string` or `{ header: string }` to specify which column to map based on its header.
+Use a `string` or `{ header: string }` to specify which column to map based on its header.
 
 > **NOTE** It is required that `{ header: true }` is used when calling `Parser#parse` and the header is on the first line of the input:
 
@@ -176,9 +169,7 @@ ExampleWithHeader[
 ]
 ```
 
-### Mapping by Index and/or Header
-
-Finally, both the `{ index: number }` and `{ header: string }` options can be used together. The `Parser` will first try to map a property using the declared header then fallback to the index.
+Both the `{ index: number }` and `{ header: string }` options can be used together. TypeDSV will first try to map a property using the declared header then fallback to the index.
 
 ```
 "A","B","C"
@@ -190,7 +181,7 @@ class ExampleWithHeaderAndIndex {
   @Parsed('A')
   first: string
 
-  @Parsed({ header: 'C', index: 1 })
+  @Parsed({ header: 'B', index: 1 })
   second: string
 
   @Parsed(2)
@@ -211,47 +202,50 @@ ExampleWithHeaderAndIndex[
 
 While values are first parsed as a `string`, the target property's type is honored so long as the conversion is straightforward. To map something beyond a few primitive types, see the [Transform](#transform) option:
 
-- `number`
+#### number
 
-  ```
-  "123","3.14","ABC"
-  ```
+```
+"123","3.14","ABC"
+```
 
-  ```typescript
-  @Parsed(0)
-  a: number // OK: 123
+```typescript
+@Parsed(0)
+a: number // OK: 123
 
-  @Parsed(1)
-  b: number // OK: 3.14
+@Parsed(1)
+b: number // OK: 3.14
 
-  @Parsed(2)
-  c: number // ERROR: 'ABC' cannot be parsed as a number
-  ```
+@Parsed(2)
+c: number // ERROR: 'ABC' cannot be parsed as a number
+```
 
-- `boolean`  
-  Valid `true` values: `['TRUE', 'Y', 'YES', 'T', '1']`  
-  Valid `false` values: `['FALSE', 'N', 'NO', 'F', '0']`
+#### boolean
 
-  ```
-  "true","0","y","F","NONE"
-  ```
+| Valid Values | (case insensitive)           |
+| ------------ | ---------------------------- |
+| `true`       | `TRUE`, `Y`, `YES`, `T`, `1` |
+| `false`      | `FALSE`, `N`, `NO`, `F`, `0` |
 
-  ```typescript
-  @Parsed(0)
-  a: boolean // OK: true
+```
+"true","0","y","F","NONE"
+```
 
-  @Parsed(1)
-  b: boolean // OK: false
+```typescript
+@Parsed(0)
+a: boolean // OK: true
 
-  @Parsed(2)
-  c: boolean // OK: true
+@Parsed(1)
+b: boolean // OK: false
 
-  @Parsed(3)
-  d: boolean // OK: false
+@Parsed(2)
+c: boolean // OK: true
 
-  @Parsed(4)
-  e: boolean // ERROR: 'NONE' cannot be parsed as a boolean
-  ```
+@Parsed(3)
+d: boolean // OK: false
+
+@Parsed(4)
+e: boolean // ERROR: 'NONE' cannot be parsed as a boolean
+```
 
 ### Options
 
