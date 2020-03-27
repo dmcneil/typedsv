@@ -221,11 +221,9 @@ c: number // ERROR: 'ABC' cannot be parsed as a number
 
 #### `boolean`
 
-**Valid Values**
-|         |                              |
-| ------- | ---------------------------- |
-| `true`  | `TRUE`, `Y`, `YES`, `T`, `1` |
-| `false` | `FALSE`, `N`, `NO`, `F`, `0` |
+**Valid Values** (case insensitive)
+- `TRUE`, `Y`, `YES`, `T`, `1`
+- `FALSE`, `N`, `NO`, `F`, `0`
 
 ```
 "true","0","y","F","NONE"
