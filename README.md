@@ -18,9 +18,9 @@
     - [delimiter](#delimiter)
     - [quote](#quote)
     - [header](#header)
+    - [transformHeaders](#transformheaders)
     - [range](#range)
     - [onObject](#onobject)
-    - [transformHeaders](#transformheaders)
 
 ## Installation
 
@@ -624,6 +624,42 @@ If the first line of the input declares the value/field names:
 
 This option also enables the ability to map properties by the headers instead of by index as described in [Mapping by Header](#mapping-by-header).
 
+#### `transformHeaders`
+
+Type: `(headers: string[]) => string[]`
+
+Given an input with headers on the first line:
+
+```
+"iD","fIrSTnAMe","LAsTNAme"
+"1","John","Doe"
+```
+
+And a class to map using the headers formatted differently:
+
+```typescript
+class Person {
+  @Parsed('id')
+  id: number
+
+  @Parsed('firstname')
+  firstName: string
+
+  @Parsed('lastname')
+  lastName: string
+}
+```
+
+Then this option can be used to reformat the headers so the values will map correctly:
+
+```typescript
+parser.parse(input, {
+  transformHeaders: (headers: string[]) => {
+    return headers.map((header: string) => header.toLowerCase())
+  }
+})
+```
+
 #### `range`
 
 Type: `[number?, number?] | { start?: number, end?: number }`  
@@ -692,41 +728,5 @@ The provided function will be called each time a row has been parsed and mapped:
 ```typescript
 parser.parse(input, {
   onObject: (row: Example, line: number) => { ... }
-})
-```
-
-#### `transformHeaders`
-
-Type: `(headers: string[]) => string[]`
-
-Given an input with headers on the first line:
-
-```
-"iD","fIrSTnAMe","LAsTNAme"
-"1","John","Doe"
-```
-
-And a class to map using the headers formatted differently:
-
-```typescript
-class Person {
-  @Parsed('id')
-  id: number
-
-  @Parsed('firstname')
-  firstName: string
-
-  @Parsed('lastname')
-  lastName: string
-}
-```
-
-Then this option can be used to reformat the headers so the values will map correctly:
-
-```typescript
-parser.parse(input, {
-  transformHeaders: (headers: string[]) => {
-    return headers.map((header: string) => header.toLowerCase())
-  }
 })
 ```
