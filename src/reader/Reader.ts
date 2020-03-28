@@ -17,7 +17,7 @@ export interface ReaderOptions {
   range?: [number?, number?] | Range
 
   onHeader?: (header: string[]) => void
-  onRow?: (row: string[] | object) => void
+  onRow?: (row: string[] | object, line: number) => void
 }
 
 const DefaultReaderOptions: ReaderOptions = Object.freeze({
@@ -48,7 +48,7 @@ export class Reader {
   private readonly comment: number
 
   private readonly onHeader?: (header: string[]) => void
-  private readonly onRow?: (row: string[] | object) => void
+  private readonly onRow?: (row: string[] | object, line: number) => void
 
   private escaped: boolean
   private quoted: boolean
@@ -275,11 +275,11 @@ export class Reader {
 
         this.result.headers.forEach((header: string, index: number) => (objectRow[header] = row[index]))
         rows.push(objectRow)
-        this.onRow?.(objectRow)
+        this.onRow?.(objectRow, this.lineNumber)
       }
     } else {
       this.result.rows.push(row)
-      this.onRow?.(row)
+      this.onRow?.(row, this.lineNumber)
     }
   }
 }

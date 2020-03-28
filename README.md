@@ -13,12 +13,13 @@
     - [transform](#transform)
     - [validate](#validate)
 - [Parser](#parser)
-  - [Comments](#comments)
+  - [Input](#input)
   - [Options](#options-1)
     - [delimiter](#delimiter)
     - [quote](#quote)
     - [header](#header)
     - [range](#range)
+    - [onObject](#onobject)
 
 ## Installation
 
@@ -222,6 +223,7 @@ c: number // ERROR: 'ABC' cannot be parsed as a number
 #### `boolean`
 
 **Valid Values** (case insensitive)
+
 - `TRUE`, `Y`, `YES`, `T`, `1`
 - `FALSE`, `N`, `NO`, `F`, `0`
 
@@ -428,7 +430,7 @@ ERROR Validation failed for property id: ['validate.0', 'id must be > 100']
 
 ## Parser
 
-The `Parser` constructor expects a type/class that has at least one property with a valid `@Parsed` decorator.
+The `Parser` constructor expects a type/class that has at least one property with decorated with `@Parsed`:
 
 ```typescript
 export default class Example {
@@ -441,17 +443,37 @@ const parser = new Parser(Example)
 
 > **NOTE** An error will be thrown when attempting to create a `Parser` with a type that does not have any decorated properties.
 
-Once a `Parser` is created, simply call the `parse` function with an input and any [options](#options-1):
+Once a `Parser` is created, simply call the `parse` function with an input and [options](#options-1) using any of the following methods:
+
+#### Promise
 
 ```typescript
 parser.parse(input, { ... })
   .then((examples: Example[]) => ...)
+```
 
-// ...or using an async function
+#### `async`/`await`
+
+Wait for all rows to be parsed...
+
+```typescript
 (async () => {
-  const examples = await parser.parse(input, { ... })
+  const examples: Example[] = await parser.parse(input, { ... })
 })()
 ```
+
+...or provide a callback function to the `onObject` option:
+
+```typescript
+(async () => {
+  await parser.parse(input, {
+    ...,
+    onObject: (row: Example, line: number) => ...)
+  })
+})
+```
+
+### Input
 
 The input is assumed to be formatted where each line is considered a single record. A line is then separated by a delimiter to represent a column/field value. Most of the examples in this document make use of the common CSV (comma-separated value) format:
 
@@ -461,6 +483,27 @@ The input is assumed to be formatted where each line is considered a single reco
 "3","Matt","Smith"
 ...
 ```
+
+Lines that begin with the comment character (default: `#`) are skipped:
+
+```
+"ID","FirstName","LastName"
+"1","John","Doe"
+# this comment will be skipped
+"2","Jane","Doe"
+"3","Matt","Smith"
+```
+
+If a line ends with an inline comment, the line is parsed up until the comment:
+
+```
+"ID","FirstName","LastName"
+"1","John","Doe"
+"2","Jane","Doe" # this line is parsed up to this comment
+"3","Matt","Smith"
+```
+
+#### Reading the Input
 
 The input can be passed as the first argument to `parse` in a few different forms:
 
@@ -488,31 +531,10 @@ const input = Buffer.from(`
 
 #### `Readable`
 
-Typically the most common method by reading a file into a `ReadStream`.
+The most common method is reading a file into a `ReadStream`.
 
 ```typescript
 const input = createReadStream('/tmp/data.csv')
-```
-
-#### Comments
-
-Lines that begin with the comment character (default: `#`) are skipped:
-
-```
-"ID","FirstName","LastName"
-"1","John","Doe"
-# this comment will be skipped
-"2","Jane","Doe"
-"3","Matt","Smith"
-```
-
-If a line ends with an inline comment, the line is parsed up until the comment:
-
-```
-"ID","FirstName","LastName"
-"1","John","Doe"
-"2","Jane","Doe" # this line is parsed up to this comment
-"3","Matt","Smith"
 ```
 
 ### Options
@@ -601,7 +623,7 @@ If the first line of the input declares the value/field names:
 
 This option also enables the ability to map properties by the headers instead of by index as described in [Mapping by Header](#mapping-by-header).
 
-#### range
+#### `range`
 
 Type: `[number?, number?] | { start?: number, end?: number }`  
 Default: `{ start: 1 }`
@@ -658,4 +680,16 @@ parser.parse(input, { range: { start: 2, end: 4 } }) // object form
   ['2', 'Jane', 'Doe'],
   ['3', 'Matt', 'Smith']
 ]
+```
+
+#### `onObject`
+
+Type: `(o: T, line: number) => void`
+
+This function will be called each time a row has been parsed and mapped:
+
+```typescript
+parser.parse(input, {
+  onObject: (row: Example, line: number) => { ... }
+})
 ```

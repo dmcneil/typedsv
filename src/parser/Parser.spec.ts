@@ -127,9 +127,10 @@ A,B
 
     const parser = new Parser(Data)
     await parser.parse(data.trim(), {
-      onObject: (got: Data, index: number) => {
-        expect(got).toEqual(expected[index])
-        expected[index].verified = true
+      onObject: (got: Data, line: number) => {
+        line = line - 1 // adjust line number for index
+        expect(got).toEqual(expected[line])
+        expected[line].verified = true
       }
     })
 

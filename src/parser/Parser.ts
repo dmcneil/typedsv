@@ -5,7 +5,7 @@ import { getStore } from '../metadata/Store'
 import { Reader, ReaderOptions } from '../reader/Reader'
 
 type ParserOptions<T> = {
-  onObject?: (o: T, index: number) => void
+  onObject?: (o: T, line: number) => void
 } & ReaderOptions
 
 export class Parser<T> {
@@ -23,7 +23,7 @@ export class Parser<T> {
       const objects: T[] = []
 
       options.onHeader = (header: string[]) => headers.push(...header)
-      options.onRow = (row: string[] | object) => {
+      options.onRow = (row: string[] | object, line: number) => {
         const target = new this.type()
 
         if (row instanceof Array) {
@@ -40,7 +40,7 @@ export class Parser<T> {
           })
         }
 
-        options.onObject?.(target, objects.length)
+        options.onObject?.(target, line)
         objects.push(target)
       }
 
