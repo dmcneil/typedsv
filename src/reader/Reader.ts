@@ -15,6 +15,9 @@ export interface ReaderOptions {
   newline?: string
   comment?: string
   range?: [number?, number?] | Range
+
+  onHeader?: (header: string[]) => void
+  onRow?: (row: string[] | object, line: number) => void
 }
 
 const DefaultReaderOptions: ReaderOptions = Object.freeze({
@@ -43,6 +46,9 @@ export class Reader {
   private readonly delimiter: number
   private readonly newline: number
   private readonly comment: number
+
+  private readonly onHeader?: (header: string[]) => void
+  private readonly onRow?: (row: string[] | object, line: number) => void
 
   private escaped: boolean
   private quoted: boolean
@@ -82,6 +88,8 @@ export class Reader {
     this.delimiter = opts.delimiter.charCodeAt(0)
     this.newline = opts.newline.charCodeAt(0)
     this.comment = opts.comment.charCodeAt(0)
+    this.onHeader = opts.onHeader
+    this.onRow = opts.onRow
   }
 
   reset() {
@@ -110,7 +118,7 @@ export class Reader {
       input = Buffer.concat([input, Buffer.alloc(1, '\n')])
     }
 
-    this.readLines(input, this.rowCallback)
+    this.readLines(input)
 
     return Promise.resolve(this.result).finally(() => this.reset())
   }
@@ -125,7 +133,7 @@ export class Reader {
         .on('error', err => reject(err))
         .on('data', async (chunk: Buffer) => {
           buffer = buffer === null ? chunk : Buffer.concat([buffer, chunk], buffer.length + chunk.length)
-          buffer = this.readLines(buffer, this.rowCallback)
+          buffer = this.readLines(buffer)
           if (end && this.lineNumber >= end) {
             input.destroy()
             input.emit('end')
@@ -135,7 +143,7 @@ export class Reader {
     })
   }
 
-  private readLines(input: Buffer, cb?: (row: string[]) => void): Buffer {
+  private readLines(input: Buffer): Buffer {
     const { start, end } = this.range
 
     let row: string[] = []
@@ -230,9 +238,7 @@ export class Reader {
           }
 
           if ((!start || this.lineNumber >= start) && (!end || this.lineNumber < end)) {
-            if (cb) {
-              cb(row)
-            }
+            this.rowCallback(row)
             read = read + ((c === this.cr ? i + 2 : i + 1) - read)
           } else {
             read = i + 1
@@ -262,16 +268,18 @@ export class Reader {
     if (this.header) {
       if (this.lineNumber === 1) {
         this.result.headers = row
+        this.onHeader?.(this.result.headers)
       } else {
         const rows = this.result.rows as object[]
         const objectRow = {}
-        this.result.headers.forEach((header: string, index: number) => {
-          objectRow[header] = row[index]
-        })
+
+        this.result.headers.forEach((header: string, index: number) => (objectRow[header] = row[index]))
         rows.push(objectRow)
+        this.onRow?.(objectRow, this.lineNumber)
       }
     } else {
       this.result.rows.push(row)
+      this.onRow?.(row, this.lineNumber)
     }
   }
 }

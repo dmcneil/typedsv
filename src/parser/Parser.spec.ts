@@ -101,4 +101,39 @@ A,B
       { a: 'C', b: 456, a2: 'C', b2: 456 }
     ])
   })
+
+  it('should accept a callback for a parsed object', async () => {
+    const data = `
+"A",123
+"B",321
+"C",456
+`
+
+    class Data {
+      @Parsed({ index: 0 })
+      a: string
+
+      @Parsed({ index: 1 })
+      b: number
+
+      verified?: boolean
+    }
+
+    const expected: Data[] = [
+      { a: 'A', b: 123 },
+      { a: 'B', b: 321 },
+      { a: 'C', b: 456 }
+    ]
+
+    const parser = new Parser(Data)
+    await parser.parse(data.trim(), {
+      onObject: (got: Data, line: number) => {
+        line = line - 1 // adjust line number for index
+        expect(got).toEqual(expected[line])
+        expected[line].verified = true
+      }
+    })
+
+    expect(expected.filter(e => e.verified)).toHaveLength(3)
+  })
 })
