@@ -20,6 +20,7 @@
     - [header](#header)
     - [range](#range)
     - [onObject](#onobject)
+    - [transformHeaders](#transformheaders)
 
 ## Installation
 
