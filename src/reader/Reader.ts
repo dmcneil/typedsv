@@ -268,29 +268,18 @@ export class Reader {
     if (this.header) {
       if (this.lineNumber === 1) {
         this.result.headers = row
-
-        if (this.onHeader) {
-          this.onHeader(this.result.headers)
-        }
+        this.onHeader?.(this.result.headers)
       } else {
         const rows = this.result.rows as object[]
         const objectRow = {}
 
-        this.result.headers.forEach((header: string, index: number) => {
-          objectRow[header] = row[index]
-        })
+        this.result.headers.forEach((header: string, index: number) => (objectRow[header] = row[index]))
         rows.push(objectRow)
-
-        if (this.onRow) {
-          this.onRow(objectRow)
-        }
+        this.onRow?.(objectRow)
       }
     } else {
       this.result.rows.push(row)
-
-      if (this.onRow) {
-        this.onRow(row)
-      }
+      this.onRow?.(row)
     }
   }
 }

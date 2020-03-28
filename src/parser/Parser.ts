@@ -4,7 +4,9 @@ import { ParsedProperty } from '../metadata/ParsedProperty'
 import { getStore } from '../metadata/Store'
 import { Reader, ReaderOptions } from '../reader/Reader'
 
-type ParserOptions = {} & ReaderOptions
+type ParserOptions<T> = {
+  onObject?: (o: T, index: number) => void
+} & ReaderOptions
 
 export class Parser<T> {
   private readonly type: ConstructableType<T>
@@ -15,8 +17,8 @@ export class Parser<T> {
     this.properties = getStore().getParsed(this.type)
   }
 
-  parse = (input: InputType, options: ParserOptions = {}): Promise<T[]> => {
-    return new Promise<T[]>(async (resolve, reject) => {
+  parse = (input: InputType, options: ParserOptions<T> = {}): Promise<T[]> => {
+    return new Promise<T[]>(async resolve => {
       const headers: string[] = []
       const objects: T[] = []
 
@@ -24,24 +26,21 @@ export class Parser<T> {
       options.onRow = (row: string[] | object) => {
         const target = new this.type()
 
-        try {
-          if (row instanceof Array) {
-            row.forEach((value: any, index: number) => {
-              this.properties
-                .filter(args => args.options.index === index)
-                .forEach((prop: ParsedProperty) => prop.set(target, value))
-            })
-          } else if (typeof row === 'object') {
-            headers.forEach((value: string, index: number) => {
-              this.properties
-                .filter(args => args.options.header === value || args.options.index === index)
-                .forEach((prop: ParsedProperty) => prop.set(target, row[value]))
-            })
-          }
-        } catch (e) {
-          reject(e)
+        if (row instanceof Array) {
+          row.forEach((value: any, index: number) => {
+            this.properties
+              .filter(args => args.options.index === index)
+              .forEach((prop: ParsedProperty) => prop.set(target, value))
+          })
+        } else if (typeof row === 'object') {
+          headers.forEach((value: string, index: number) => {
+            this.properties
+              .filter(args => args.options.header === value || args.options.index === index)
+              .forEach((prop: ParsedProperty) => prop.set(target, row[value]))
+          })
         }
 
+        options.onObject?.(target, objects.length)
         objects.push(target)
       }
 
