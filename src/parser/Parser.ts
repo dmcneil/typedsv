@@ -15,14 +15,13 @@ export class Parser<T> {
     this.properties = getStore().getParsed(this.type)
   }
 
-  parse = (input: InputType, options?: ParserOptions): Promise<T[]> => {
-    const objects: T[] = []
-    const reader = new Reader(options)
-
+  parse = (input: InputType, options: ParserOptions = {}): Promise<T[]> => {
     return new Promise<T[]>(async (resolve, reject) => {
-      const result = await reader.read(input)
+      const headers: string[] = []
+      const objects: T[] = []
 
-      result.rows.forEach((row: string[] | object) => {
+      options.onHeader = (header: string[]) => headers.push(...header)
+      options.onRow = (row: string[] | object) => {
         const target = new this.type()
 
         try {
@@ -33,7 +32,7 @@ export class Parser<T> {
                 .forEach((prop: ParsedProperty) => prop.set(target, value))
             })
           } else if (typeof row === 'object') {
-            result.headers.forEach((value: string, index: number) => {
+            headers.forEach((value: string, index: number) => {
               this.properties
                 .filter(args => args.options.header === value || args.options.index === index)
                 .forEach((prop: ParsedProperty) => prop.set(target, row[value]))
@@ -44,7 +43,10 @@ export class Parser<T> {
         }
 
         objects.push(target)
-      })
+      }
+
+      const reader = new Reader(options)
+      await reader.read(input)
 
       resolve(objects)
     })
