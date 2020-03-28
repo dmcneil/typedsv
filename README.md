@@ -686,10 +686,46 @@ parser.parse(input, { range: { start: 2, end: 4 } }) // object form
 
 Type: `(o: T, line: number) => void`
 
-This function will be called each time a row has been parsed and mapped:
+The provided function will be called each time a row has been parsed and mapped:
 
 ```typescript
 parser.parse(input, {
   onObject: (row: Example, line: number) => { ... }
+})
+```
+
+#### `transformHeaders`
+
+Type: `(headers: string[]) => string[]`
+
+Given an input with headers on the first line:
+
+```
+"iD","fIrSTnAMe","LAsTNAme"
+"1","John","Doe"
+```
+
+And a class to map using the headers formatted differently:
+
+```typescript
+class Person {
+  @Parsed('id')
+  id: number
+
+  @Parsed('firstname')
+  firstName: string
+
+  @Parsed('lastname')
+  lastName: string
+}
+```
+
+Then this option can be used to reformat the headers so the values will map correctly:
+
+```typescript
+parser.parse(input, {
+  transformHeaders: (headers: string[]) => {
+    return headers.map((header: string) => header.toLowerCase())
+  }
 })
 ```
