@@ -47,6 +47,23 @@ A,B,C,D,E
     })
   })
 
+  it('should allow transforming headers', async () => {
+    const data = `
+A,B,C,D,E
+1,A,123,"B","Fo,o"
+`
+    const reader = new Reader({
+      header: true,
+      transformHeaders: (headers: string[]) => headers.map((header: string) => `${header}${header}`)
+    })
+    const lines = await reader.read(data)
+
+    expect(lines).toEqual({
+      headers: ['AA', 'BB', 'CC', 'DD', 'EE'],
+      rows: [{ AA: '1', BB: 'A', CC: '123', DD: 'B', EE: 'Fo,o' }]
+    })
+  })
+
   it('should allow a custom quote', async () => {
     const data = `
 ~A~,~B~,~C~,~D~,~E~

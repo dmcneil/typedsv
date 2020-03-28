@@ -22,7 +22,7 @@ export class Parser<T> {
       const headers: string[] = []
       const objects: T[] = []
 
-      options.onHeader = (header: string[]) => headers.push(...header)
+      options.onHeaders = (header: string[]) => headers.push(...header)
       options.onRow = (row: string[] | object, line: number) => {
         const target = new this.type()
 

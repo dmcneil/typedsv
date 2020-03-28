@@ -16,7 +16,8 @@ export interface ReaderOptions {
   comment?: string
   range?: [number?, number?] | Range
 
-  onHeader?: (header: string[]) => void
+  transformHeaders?: (headers: string[]) => string[]
+  onHeaders?: (headers: string[]) => void
   onRow?: (row: string[] | object, line: number) => void
 }
 
@@ -47,7 +48,8 @@ export class Reader {
   private readonly newline: number
   private readonly comment: number
 
-  private readonly onHeader?: (header: string[]) => void
+  private readonly transformHeaders?: (headers: string[]) => string[]
+  private readonly onHeaders?: (headers: string[]) => void
   private readonly onRow?: (row: string[] | object, line: number) => void
 
   private escaped: boolean
@@ -88,7 +90,8 @@ export class Reader {
     this.delimiter = opts.delimiter.charCodeAt(0)
     this.newline = opts.newline.charCodeAt(0)
     this.comment = opts.comment.charCodeAt(0)
-    this.onHeader = opts.onHeader
+    this.transformHeaders = opts.transformHeaders
+    this.onHeaders = opts.onHeaders
     this.onRow = opts.onRow
   }
 
@@ -267,8 +270,8 @@ export class Reader {
 
     if (this.header) {
       if (this.lineNumber === 1) {
-        this.result.headers = row
-        this.onHeader?.(this.result.headers)
+        this.result.headers = this.transformHeaders?.(row) ?? row
+        this.onHeaders?.(this.result.headers)
       } else {
         const rows = this.result.rows as object[]
         const objectRow = {}
