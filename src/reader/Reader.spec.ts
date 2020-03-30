@@ -266,7 +266,23 @@ bar",654,E,Foo,
 
   describe('inputs', () => {
     it('should accept a stream', async () => {
-      const stream = createReadStream('./src/parser/fixtures/basic.csv')
+      const stream = createReadStream('./src/reader/fixtures/basic.csv')
+      const reader = new Reader({ headers: true })
+      const lines = await reader.read(stream)
+
+      expect(lines).toEqual({
+        headers: ['ID', 'FirstName', 'LastName'],
+        rows: [
+          { ID: '1', FirstName: 'John', LastName: 'Doe' },
+          { ID: '2', FirstName: 'Jane', LastName: 'Doe' },
+          { ID: '3', FirstName: 'Matt', LastName: 'Smi\nth' },
+          { ID: '4', FirstName: 'Jessica', LastName: 'Jones' }
+        ]
+      })
+    })
+
+    it('should trim leading and trailing whitespace in a stream', async () => {
+      const stream = createReadStream('./src/reader/fixtures/whitespace_basic.csv')
       const reader = new Reader({ headers: true })
       const lines = await reader.read(stream)
 
@@ -282,7 +298,7 @@ bar",654,E,Foo,
     })
 
     it('should destroy a stream early when using a range with an end line', async () => {
-      const stream = createReadStream('./src/parser/fixtures/basic.csv', { highWaterMark: 1 })
+      const stream = createReadStream('./src/reader/fixtures/basic.csv', { highWaterMark: 1 })
       const reader = new Reader({ headers: true, range: [1, 4] })
       const lines = await reader.read(stream)
 

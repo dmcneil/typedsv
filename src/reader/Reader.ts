@@ -56,6 +56,7 @@ export class Reader {
   private quoted: boolean
   private commented: boolean
   private lineNumber: number
+  private actualLine: number
 
   private maxColumns: number
   private result: ReaderResult
@@ -112,6 +113,7 @@ export class Reader {
     this.quoted = false
     this.commented = false
     this.lineNumber = 0
+    this.actualLine = 0
     this.maxColumns = 0
 
     this.result = { headers: null, rows: [] }
@@ -214,7 +216,7 @@ export class Reader {
         }
       }
 
-      if (c === this.space && !this.quoted && (prev === this.quote || next === this.quote)) {
+      if (c === this.space && !this.quoted && (prev === this.quote || next === this.quote || cell.length === 0)) {
         continue
       }
 
@@ -241,12 +243,17 @@ export class Reader {
             continue
           }
 
+          this.actualLine++
+
           if (cell.length > 0) {
             row.push(String.fromCharCode(...cell))
             cell = []
           }
 
-          if ((!start || this.lineNumber >= start) && (!end || this.lineNumber < end)) {
+          if (
+            (!start || this.actualLine >= start) &&
+            (!end || this.actualLine + (this.actualLine % this.lineNumber) < end)
+          ) {
             this.rowCallback(row)
             read = read + ((c === this.cr ? i + 2 : i + 1) - read)
           } else {
@@ -268,14 +275,14 @@ export class Reader {
   }
 
   private rowCallback = (row: string[]): void => {
-    if (this.lineNumber === 1) {
+    if (this.actualLine === 1) {
       this.maxColumns = row.length
     } else if (this.strict && row.length !== this.maxColumns) {
       throw new Error(`Line ${this.lineNumber} has ${row.length} columns but ${this.maxColumns} were expected`)
     }
 
     if (this.headers) {
-      if (this.lineNumber === 1 && typeof this.headers === 'boolean') {
+      if (this.actualLine === 1 && typeof this.headers === 'boolean') {
         this.result.headers = this.mapHeaders?.(row) ?? row
         this.onHeaders?.(this.result.headers)
       } else {
