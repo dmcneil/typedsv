@@ -622,7 +622,7 @@ If the first line of the input declares the value/field names:
 "1","John","Doe"
 ```
 
-This option also enables the ability to map properties by the headers instead of by index as described in [Mapping by Header](#mapping-by-header).
+This option also enables the ability to map properties by the headers instead of by index as described in [Mapping Properties with @Parsed](#mapping-properties-with-parsed).
 
 #### `transformHeaders`
 
