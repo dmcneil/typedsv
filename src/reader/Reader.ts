@@ -8,7 +8,7 @@ interface Range {
 
 export interface ReaderOptions {
   strict?: boolean
-  header?: boolean
+  headers?: boolean | string[]
   quote?: string
   escape?: string
   delimiter?: string
@@ -23,7 +23,7 @@ export interface ReaderOptions {
 
 const DefaultReaderOptions: ReaderOptions = Object.freeze({
   strict: false,
-  header: false,
+  headers: false,
   quote: '"',
   escape: '"',
   delimiter: ',',
@@ -33,7 +33,7 @@ const DefaultReaderOptions: ReaderOptions = Object.freeze({
 })
 
 export interface ReaderResult {
-  headers: string[] | null
+  headers?: string[]
   rows: string[][] | object[]
 }
 
@@ -41,7 +41,7 @@ export class Reader {
   private readonly strict: boolean
 
   private readonly range: Range
-  private readonly header: boolean
+  private readonly headers: boolean | string[]
   private readonly quote: number
   private readonly escape: number
   private readonly delimiter: number
@@ -84,7 +84,7 @@ export class Reader {
     }
     this.range = opts.range
 
-    this.header = opts.header
+    this.headers = opts.headers
     this.quote = opts.quote.charCodeAt(0)
     this.escape = opts.escape.charCodeAt(0)
     this.delimiter = opts.delimiter.charCodeAt(0)
@@ -95,13 +95,19 @@ export class Reader {
     this.onRow = opts.onRow
   }
 
-  reset() {
+  private reset() {
     this.escaped = false
     this.quoted = false
     this.commented = false
     this.lineNumber = 0
     this.maxColumns = 0
-    this.result = { headers: [], rows: [] }
+
+    this.result = { headers: null, rows: [] }
+    if (this.headers instanceof Array) {
+      this.result.headers = this.headers
+    } else {
+      this.result.headers = this.headers ? [] : null
+    }
   }
 
   read(input: InputType): Promise<ReaderResult> {
@@ -268,8 +274,8 @@ export class Reader {
       throw new Error(`Line ${this.lineNumber} has ${row.length} columns but ${this.maxColumns} were expected`)
     }
 
-    if (this.header) {
-      if (this.lineNumber === 1) {
+    if (this.headers) {
+      if (this.lineNumber === 1 && typeof this.headers === 'boolean') {
         this.result.headers = this.mapHeaders?.(row) ?? row
         this.onHeaders?.(this.result.headers)
       } else {

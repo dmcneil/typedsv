@@ -13,7 +13,7 @@ describe('Reader', () => {
     const lines = await reader.read(data)
 
     expect(lines).toEqual({
-      headers: [],
+      headers: null,
       rows: [
         ['1', 'A', '123', 'B', 'Foo'],
         ['2', 'B', '321', 'C', 'Bar']
@@ -28,7 +28,7 @@ describe('Reader', () => {
     const lines = await reader.read(data)
 
     expect(lines).toEqual({
-      headers: [],
+      headers: null,
       rows: [['1', 'A', '123', 'B', 'Fo,o']]
     })
   })
@@ -38,12 +38,39 @@ describe('Reader', () => {
 A,B,C,D,E
 1,A,123,"B","Fo,o"
 `
-    const reader = new Reader({ header: true })
+    const reader = new Reader({ headers: true })
     const lines = await reader.read(data)
 
     expect(lines).toEqual({
       headers: ['A', 'B', 'C', 'D', 'E'],
       rows: [{ A: '1', B: 'A', C: '123', D: 'B', E: 'Fo,o' }]
+    })
+  })
+
+  it('should not skip the first row if headers are supplied', async () => {
+    const data = `
+1,A,123,"B","Fo,o"
+`
+    const reader = new Reader({ headers: ['F', 'G', 'H', 'I', 'J'] })
+    const lines = await reader.read(data)
+
+    expect(lines).toEqual({
+      headers: ['F', 'G', 'H', 'I', 'J'],
+      rows: [{ F: '1', G: 'A', H: '123', I: 'B', J: 'Fo,o' }]
+    })
+  })
+
+  it('should reset using supplied headers', async () => {
+    const data = `
+1,A,123,"B","Fo,o"
+`
+    const reader = new Reader({ headers: ['F', 'G', 'H', 'I', 'J'] })
+    await reader.read(data)
+    const lines = await reader.read(data) // call a second time to trigger reset
+
+    expect(lines).toEqual({
+      headers: ['F', 'G', 'H', 'I', 'J'],
+      rows: [{ F: '1', G: 'A', H: '123', I: 'B', J: 'Fo,o' }]
     })
   })
 
@@ -53,7 +80,7 @@ A,B,C,D,E
 1,A,123,"B","Fo,o"
 `
     const reader = new Reader({
-      header: true,
+      headers: true,
       mapHeaders: (headers: string[]) => headers.map((header: string) => `${header}${header}`)
     })
     const lines = await reader.read(data)
@@ -69,7 +96,7 @@ A,B,C,D,E
 ~A~,~B~,~C~,~D~,~E~
 1,A,123,~B~,~Fo,o~
 `
-    const reader = new Reader({ header: true, quote: '~' })
+    const reader = new Reader({ headers: true, quote: '~' })
     const lines = await reader.read(data)
 
     expect(lines).toEqual({
@@ -84,7 +111,7 @@ A,B,C,D,E
     const lines = await reader.read(data)
 
     expect(lines).toEqual({
-      headers: [],
+      headers: null,
       rows: [['1', 'A', '123', 'B', 'Fo"o']]
     })
   })
@@ -98,7 +125,7 @@ A,B,C,D,E
     const lines = await reader.read(data)
 
     expect(lines).toEqual({
-      headers: [],
+      headers: null,
       rows: [
         ['1', 'A', '123', 'B', '"'],
         ['1', 'A', '123', 'B', '~']
@@ -112,7 +139,7 @@ A,B,C,D,E
     const lines = await reader.read(data)
 
     expect(lines).toEqual({
-      headers: [],
+      headers: null,
       rows: [['1', 'A', '123', 'B', 'Fo,o']]
     })
   })
@@ -123,7 +150,7 @@ A,B,C,D,E
     const lines = await reader.read(data)
 
     expect(lines).toEqual({
-      headers: [],
+      headers: null,
       rows: [['1', 'A', '123', 'B', 'Fo,o']]
     })
   })
@@ -138,7 +165,7 @@ bar",654,E,Foo
     const lines = await reader.read(data)
 
     expect(lines).toEqual({
-      headers: [],
+      headers: null,
       rows: [
         ['4', 'foo\nbar', '654', 'E', 'Foo'],
         ['5', 'A', '321', 'F\r', 'Foobar']
@@ -159,7 +186,7 @@ bar",654,E,Foo,
     const lines = await reader.read(data)
 
     expect(lines).toEqual({
-      headers: [],
+      headers: null,
       rows: [
         ['1', 'A', '123', 'B', 'Fo,o'],
         ['2', 'B', '321', 'C', 'Foo",bar'],
@@ -176,7 +203,7 @@ bar",654,E,Foo,
     const lines = await reader.read(data)
 
     expect(lines).toEqual({
-      headers: [],
+      headers: null,
       rows: [['1', 'A', '123', '"B"', 'Fo,o']]
     })
   })
@@ -187,7 +214,7 @@ bar",654,E,Foo,
     const lines = await reader.read(data)
 
     expect(lines).toEqual({
-      headers: [],
+      headers: null,
       rows: [['1', 'A', '123', 'B"""B', 'Fo,o']]
     })
   })
@@ -201,7 +228,7 @@ bar",654,E,Foo,
     const lines = await reader.read(data)
 
     expect(lines).toEqual({
-      headers: [],
+      headers: null,
       rows: [
         ['1', 'A', '123', 'B', 'Fo"o'],
         ['2', 'B', '321', 'C', 'Foo"bar']
@@ -215,7 +242,7 @@ bar",654,E,Foo,
     const lines = await reader.read(data)
 
     expect(lines).toEqual({
-      headers: [],
+      headers: null,
       rows: [['1', 'A', '123', '"B"', 'Fo,o']]
     })
   })
@@ -229,7 +256,7 @@ bar",654,E,Foo,
     const lines = await reader.read(data)
 
     expect(lines).toEqual({
-      headers: [],
+      headers: null,
       rows: [
         ['1', 'A', '123', '', 'Fo"o', ''],
         ['2', 'B', '321', '', '', '', 'Foo"bar']
@@ -240,7 +267,7 @@ bar",654,E,Foo,
   describe('inputs', () => {
     it('should accept a stream', async () => {
       const stream = createReadStream('./src/parser/fixtures/basic.csv')
-      const reader = new Reader({ header: true })
+      const reader = new Reader({ headers: true })
       const lines = await reader.read(stream)
 
       expect(lines).toEqual({
@@ -256,7 +283,7 @@ bar",654,E,Foo,
 
     it('should destroy a stream early when using a range with an end line', async () => {
       const stream = createReadStream('./src/parser/fixtures/basic.csv', { highWaterMark: 1 })
-      const reader = new Reader({ header: true, range: [1, 4] })
+      const reader = new Reader({ headers: true, range: [1, 4] })
       const lines = await reader.read(stream)
 
       expect(lines).toEqual({
@@ -287,7 +314,7 @@ A,B,C,D,E
 1,A,123,"B","Fo,o"
 2,B,321
 `
-        const reader = new Reader({ strict: true, header: true })
+        const reader = new Reader({ strict: true, headers: true })
 
         expect(() => reader.read(data)).toThrowError(new Error('Line 3 has 3 columns but 5 were expected'))
       })
@@ -298,7 +325,7 @@ A,B,C,D,E
 1,A,123,"B",""
 2,B,321,"C",Foobar,FOO
 `
-        const reader = new Reader({ strict: true, header: true })
+        const reader = new Reader({ strict: true, headers: true })
 
         expect(() => reader.read(data)).toThrowError(new Error('Line 3 has 6 columns but 5 were expected'))
       })
@@ -311,7 +338,7 @@ A,B,C,D,E
 1,A,123,"B","Fo,o"
 2,B,321
 `
-      const reader = new Reader({ strict: true, header: false })
+      const reader = new Reader({ strict: true, headers: false })
 
       expect(() => reader.read(data)).toThrowError(new Error('Line 2 has 3 columns but 5 were expected'))
     })
@@ -321,7 +348,7 @@ A,B,C,D,E
 1,A,123,"B",""
 2,B,321,"C",Foobar,FOO
 `
-      const reader = new Reader({ strict: true, header: false })
+      const reader = new Reader({ strict: true, headers: false })
 
       expect(() => reader.read(data)).toThrowError(new Error('Line 2 has 6 columns but 5 were expected'))
     })
@@ -339,7 +366,7 @@ A,B,C,D,E
         const got = await reader.read(data)
 
         expect(got).toEqual({
-          headers: [],
+          headers: null,
           rows: [
             ['2', 'B', '456'],
             ['3', 'C', '789']
@@ -357,7 +384,7 @@ A,B,C,D,E
         const got = await reader.read(data)
 
         expect(got).toEqual({
-          headers: [],
+          headers: null,
           rows: [
             ['1', 'A', '123'],
             ['2', 'B', '456']
@@ -377,7 +404,7 @@ A,B,C,D,E
         const got = await reader.read(data)
 
         expect(got).toEqual({
-          headers: [],
+          headers: null,
           rows: [
             ['1', 'A', '123'],
             ['2', 'B', '456'],
@@ -398,7 +425,7 @@ A,B,C,D,E
         const got = await reader.read(data)
 
         expect(got).toEqual({
-          headers: [],
+          headers: null,
           rows: [
             ['2', 'B', '456'],
             ['3', 'C', '789']
@@ -416,7 +443,7 @@ A,B,C,D,E
         const got = await reader.read(data)
 
         expect(got).toEqual({
-          headers: [],
+          headers: null,
           rows: [
             ['1', 'A', '123'],
             ['2', 'B', '456']
@@ -436,7 +463,7 @@ A,B,C,D,E
         const got = await reader.read(data)
 
         expect(got).toEqual({
-          headers: [],
+          headers: null,
           rows: [
             ['1', 'A', '123'],
             ['2', 'B', '456'],
