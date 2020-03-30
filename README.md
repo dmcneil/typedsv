@@ -620,6 +620,8 @@ Then they will be parsed and used for mapping if this option is set to `true`.
 
 Alternatively, a `string[]` can be used to define headers before parsing the input. In this case, the first line of the input _does not_ need to be header declarations. Of course, the supplied headers will be honored when property mapping:
 
+> **NOTE** If the input _does_ contain header declarations on the first line, it is recommended to use the [range](#range) option to skip the first line.
+
 ```
 "1","John","Doe"
 "2","Jane","Doe"
@@ -642,8 +644,6 @@ class Person {
 const parser = new Parser(Person)
 ... = parser.parse(input, { headers: ['id', 'firstName', 'lastName'] })
 ```
-
-If this form is used and your input _does_ contain header declarations on the first line, it is recommended to use the [range](#range) option to skip the first line.
 
 #### `mapHeaders`
 
