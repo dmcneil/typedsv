@@ -59,7 +59,7 @@ A,B,C,D
     }
 
     const parser = new Parser(Data)
-    const got = await parser.parse(data.trim(), { header: true })
+    const got = await parser.parse(data.trim(), { headers: true })
 
     expect(got).toHaveLength(3)
     expect(got).toEqual([
@@ -92,7 +92,7 @@ A,B
     }
 
     const parser = new Parser(Data)
-    const got = await parser.parse(data.trim(), { header: true })
+    const got = await parser.parse(data.trim(), { headers: true })
 
     expect(got).toHaveLength(3)
     expect(got).toEqual([

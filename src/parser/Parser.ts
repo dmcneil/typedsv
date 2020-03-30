@@ -17,7 +17,7 @@ export class Parser<T> {
     this.properties = getStore().getParsed(this.type)
   }
 
-  parse = (input: InputType, options: ParserOptions<T> = {}): Promise<T[]> => {
+  parse(input: InputType, options: ParserOptions<T> = {}): Promise<T[]> {
     return new Promise<T[]>(async resolve => {
       const headers: string[] = []
       const objects: T[] = []
