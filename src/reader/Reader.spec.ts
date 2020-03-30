@@ -54,7 +54,7 @@ A,B,C,D,E
 `
     const reader = new Reader({
       header: true,
-      transformHeaders: (headers: string[]) => headers.map((header: string) => `${header}${header}`)
+      mapHeaders: (headers: string[]) => headers.map((header: string) => `${header}${header}`)
     })
     const lines = await reader.read(data)
 

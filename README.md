@@ -10,17 +10,9 @@
 - [Mapping Properties with @Parsed](#mapping-properties-with-parsed)
   - [A Note on Property Types](#a-note-on-property-types)
   - [Options](#options)
-    - [transform](#transform)
-    - [validate](#validate)
 - [Parser](#parser)
   - [Input](#input)
   - [Options](#options-1)
-    - [delimiter](#delimiter)
-    - [quote](#quote)
-    - [header](#header)
-    - [transformHeaders](#transformheaders)
-    - [range](#range)
-    - [onObject](#onobject)
 
 ## Installation
 
@@ -202,7 +194,7 @@ ExampleWithHeaderAndIndex[
 
 ### A Note on Property Types
 
-While values are first parsed as a `string`, the target property's type is honored so long as the conversion is straightforward. To map something beyond a few primitive types, see the [Transform](#transform) option:
+While values are first parsed as a `string`, the target property's type is honored so long as the conversion is straightforward. To map something beyond a few primitive types, see the [`map`](#map) option:
 
 #### `number`
 
@@ -253,7 +245,7 @@ e: boolean // ERROR: 'NONE' cannot be parsed as a boolean
 
 > **NOTE** The below options require that the `{ index: number | header: string }` argument form detailed above is used.
 
-#### `transform`
+#### `map`
 
 Type: `(input: string) => any`
 
@@ -266,22 +258,22 @@ Modify the input value before it is mapped to the property:
 ```
 
 ```typescript
-class ExampleWithTransform {
+class ExampleWithMap {
   @Parsed({
     index: 0,
-    transform: (input: string) => input.toUpperCase()
+    map: (input: string) => input.toUpperCase()
   })
   first: string
 
   @Parsed({
     index: 1,
-    transform: (input: string) => input.split(',')
+    map: (input: string) => input.split(',')
   })
   second: string[]
 
   @Parsed({
     index: 2,
-    transform: (input: string) => {
+    map: (input: string) => {
       const n = parseInt(input)
       return n * n
     }
@@ -289,15 +281,15 @@ class ExampleWithTransform {
   third: number
 }
 
-const parser = new Parser(ExampleWithTransform)
+const parser = new Parser(ExampleWithMap)
 parser.parse(...)
 ```
 
 ```
-ExampleWithTransform[
-  ExampleWithTransform{first: 'FOO', second: ['F', 'O', 'O'], third: 1},
-  ExampleWithTransform{first: 'BAR', second: ['B', 'A', 'R'], third: 4},
-  ExampleWithTransform{first: 'BAZ', second: ['B', 'A', 'Z'], third: 9}
+ExampleWithMap[
+  ExampleWithMap{first: 'FOO', second: ['F', 'O', 'O'], third: 1},
+  ExampleWithMap{first: 'BAR', second: ['B', 'A', 'R'], third: 4},
+  ExampleWithMap{first: 'BAZ', second: ['B', 'A', 'Z'], third: 9}
 ]
 ```
 
@@ -308,23 +300,23 @@ While the function return type is `any`, an error will be thrown if the type is 
 ```
 
 ```typescript
-class ExampleWithBadTransform {
+class ExampleWithBadMap {
   @Parsed({
     index: 0,
-    transform: (input: string) => `${input.length}`
+    map: (input: string) => `${input.length}`
   })
   first: number
 
   @Parsed({
     index: 1,
-    transform: (input: string) => input.split(',')
+    map: (input: string) => input.split(',')
   })
   second: string
 }
 ```
 
 ```
-ERROR Cannot set ExampleWithBadTransform.second: Array is not assignable to String
+ERROR Cannot set ExampleWithBadMap.second: Array is not assignable to String
 ```
 
 #### `validate`
@@ -335,7 +327,7 @@ Validation to be performed before the property is set.
 
 The option accepts a few different value types but the main idea is that the function(s) take the form `(input: any) => bool` where a return value of `true` means the value is valid.
 
-> **NOTE** The `validate` functions are called _after_ the optional `transform` function.
+> **NOTE** The `validate` functions are called _after_ the optional `map` function.
 
 ```
 0,"John","Doe"
@@ -624,7 +616,7 @@ If the first line of the input declares the value/field names:
 
 This option also enables the ability to map properties by the headers instead of by index as described in [Mapping Properties with @Parsed](#mapping-properties-with-parsed).
 
-#### `transformHeaders`
+#### `mapHeaders`
 
 Type: `(headers: string[]) => string[]`
 
@@ -654,7 +646,7 @@ Then this option can be used to reformat the headers so the values will map corr
 
 ```typescript
 parser.parse(input, {
-  transformHeaders: (headers: string[]) => {
+  mapHeaders: (headers: string[]) => {
     return headers.map((header: string) => header.toLowerCase())
   }
 })

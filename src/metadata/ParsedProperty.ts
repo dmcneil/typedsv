@@ -30,9 +30,9 @@ export class ParsedProperty {
   }
 
   set = (target: any, value: any): void => {
-    const { transform, validate } = this.options
-    if (transform && typeof value === 'string') {
-      value = transform(value as string)
+    const { map, validate } = this.options
+    if (map && typeof value === 'string') {
+      value = map(value as string)
     }
 
     let ok = true

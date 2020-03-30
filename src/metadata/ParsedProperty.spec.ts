@@ -133,7 +133,7 @@ describe('ParsedProperty', () => {
     })
   })
 
-  describe('transform', () => {
+  describe('map', () => {
     it('should throw an error if the result type mismatches the property type', () => {
       class Data {
         @Parsed({
@@ -144,7 +144,7 @@ describe('ParsedProperty', () => {
 
       const data = new Data()
       const parsedProperty = new ParsedProperty('got', {
-        transform: input => 1
+        map: input => 1
       })
 
       expect(() => parsedProperty.set(data, '')).toThrowError('Cannot set Data.got: Number is not assignable to String')

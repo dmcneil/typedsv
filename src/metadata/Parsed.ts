@@ -7,7 +7,7 @@ export type TransformFunction = (input: string) => any
 export interface ParsedOptions {
   index?: number
   header?: string
-  transform?: TransformFunction
+  map?: TransformFunction
   validate?: ValidateType | ValidateType[] | ValidateOptions
 }
 
