@@ -95,6 +95,18 @@ export class Reader {
     this.onRow = opts.onRow
   }
 
+  read(input: InputType): Promise<ReaderResult> {
+    this.reset()
+
+    if (input instanceof Readable) {
+      return this.readReadable(input)
+    } else if (typeof input === 'string') {
+      input = Buffer.from(input.trim())
+    }
+
+    return this.readBuffer(input)
+  }
+
   private reset() {
     this.escaped = false
     this.quoted = false
@@ -108,18 +120,6 @@ export class Reader {
     } else {
       this.result.headers = this.headers ? [] : null
     }
-  }
-
-  read(input: InputType): Promise<ReaderResult> {
-    this.reset()
-
-    if (input instanceof Readable) {
-      return this.readReadable(input)
-    } else if (typeof input === 'string') {
-      input = Buffer.from(input.trim())
-    }
-
-    return this.readBuffer(input)
   }
 
   private readBuffer(input: Buffer): Promise<ReaderResult> {
