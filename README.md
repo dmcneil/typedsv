@@ -135,9 +135,9 @@ ExampleWithIndex[
 ]
 ```
 
-Use a `string` or `{ header: string }` to specify which column to map based on its header.
+Use a `string` or `{ header: string }` to specify which column to map based on its header:
 
-> **NOTE** It is required that `{ header: true }` is used when calling `Parser#parse` and the header is on the first line of the input:
+> **NOTE** It is required that the [headers](#headers) option is set when calling `Parser#parse`.
 
 ```
 "A","B"
@@ -602,19 +602,48 @@ Non-quoted values can contain the quote character without the escaping:
 1,John,said "Hi!"         # OK
 ```
 
-#### `header`
+#### `headers`
 
-Type: `boolean`  
+Type: `boolean | string[]`  
 Default: `false`
 
-If the first line of the input declares the value/field names:
+This option enables the ability to map properties by the headers instead of by index as described in [Mapping Properties with @Parsed](#mapping-properties-with-parsed).
+
+If the first line of the input declares the headers:
 
 ```
 "ID","FirstName","LastName"
 "1","John","Doe"
 ```
 
-This option also enables the ability to map properties by the headers instead of by index as described in [Mapping Properties with @Parsed](#mapping-properties-with-parsed).
+Then they will be parsed and used for mapping if this option is set to `true`.
+
+Alternatively, a `string[]` can be used to define headers before parsing the input. In this case, the first line of the input _does not_ need to be header declarations. Of course, the supplied headers will be honored when property mapping:
+
+```
+"1","John","Doe"
+"2","Jane","Doe"
+"3","Matt","Smith"
+"4","Megan","Smith"
+```
+
+```typescript
+class Person {
+  @Parsed('id')
+  id: number
+
+  @Parsed('firstName')
+  firstName: string
+
+  @Parsed('lastName')
+  lastName: string
+}
+
+const parser = new Parser(Person)
+... = parser.parse(input, { headers: ['id', 'firstName', 'lastName'] })
+```
+
+If this form is used and your input _does_ contain header declarations on the first line, it is recommended to use the [range](#range) option to skip the first line.
 
 #### `mapHeaders`
 
