@@ -110,6 +110,8 @@ Example[
 
 The `@Parsed` decorator dictates how the `Parser` should maps values to properties within a class.
 
+#### Index
+
 Pass a `number` or `{ index: number }` to specify which column to map based on its index:
 
 ```
@@ -134,6 +136,8 @@ ExampleWithIndex[
   ExampleWithIndex{first: 'foo', second: 'bar'}
 ]
 ```
+
+#### Headers
 
 Use a `string` or `{ header: string }` to specify which column to map based on its header:
 
@@ -210,7 +214,7 @@ a: number // OK: 123
 b: number // OK: 3.14
 
 @Parsed(2)
-c: number // ERROR: 'ABC' cannot be parsed as a number
+c: number // ERROR Cannot set c: String is not assignable to Number
 ```
 
 #### `boolean`
@@ -238,7 +242,7 @@ c: boolean // OK: true
 d: boolean // OK: false
 
 @Parsed(4)
-e: boolean // ERROR: 'NONE' cannot be parsed as a boolean
+e: boolean // ERROR Cannot set e: String is not assignable to Boolean
 ```
 
 ### Options
