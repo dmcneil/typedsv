@@ -320,7 +320,7 @@ bar",654,E,Foo,
 `
       const reader = new Reader({ strict: true })
 
-      expect(() => reader.read(data)).toThrowError(new Error('Trailing delimiter found at the end of line 1'))
+      expect(reader.read(data)).rejects.toThrowError(new Error('Trailing delimiter found at the end of line 1'))
     })
 
     describe('header: true', () => {
@@ -332,7 +332,7 @@ A,B,C,D,E
 `
         const reader = new Reader({ strict: true, headers: true })
 
-        expect(() => reader.read(data)).toThrowError(new Error('Line 3 has 3 columns but 5 were expected'))
+        expect(reader.read(data)).rejects.toThrowError(new Error('Line 3 has 3 columns but 5 were expected'))
       })
 
       it('should throw an error if there are more columns in a row', () => {
@@ -343,7 +343,7 @@ A,B,C,D,E
 `
         const reader = new Reader({ strict: true, headers: true })
 
-        expect(() => reader.read(data)).toThrowError(new Error('Line 3 has 6 columns but 5 were expected'))
+        expect(reader.read(data)).rejects.toThrowError(new Error('Line 3 has 6 columns but 5 were expected'))
       })
     })
   })
@@ -356,7 +356,7 @@ A,B,C,D,E
 `
       const reader = new Reader({ strict: true, headers: false })
 
-      expect(() => reader.read(data)).toThrowError(new Error('Line 2 has 3 columns but 5 were expected'))
+      expect(reader.read(data)).rejects.toThrowError(new Error('Line 2 has 3 columns but 5 were expected'))
     })
 
     it('should throw an error if there are more columns in a row', () => {
@@ -366,7 +366,7 @@ A,B,C,D,E
 `
       const reader = new Reader({ strict: true, headers: false })
 
-      expect(() => reader.read(data)).toThrowError(new Error('Line 2 has 6 columns but 5 were expected'))
+      expect(reader.read(data)).rejects.toThrowError(new Error('Line 2 has 6 columns but 5 were expected'))
     })
   })
 

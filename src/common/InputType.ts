@@ -1,3 +1,3 @@
 import { Readable } from 'stream'
 
-export type InputType = string | Buffer | Readable
+export type InputType = string | Readable

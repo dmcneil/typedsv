@@ -99,13 +99,15 @@ export class Reader {
   read(input: InputType): Promise<ReaderResult> {
     this.reset()
 
-    if (input instanceof Readable) {
-      return this.readReadable(input)
-    } else if (typeof input === 'string') {
-      input = Buffer.from(input.trim())
+    if (typeof input === 'string') {
+      const readable = new Readable()
+      readable.push(input.trim())
+      readable.push(String.fromCharCode(this.newline))
+      readable.push(null)
+      input = readable
     }
 
-    return this.readBuffer(input)
+    return this.readReadable(input)
   }
 
   private reset() {
@@ -124,16 +126,6 @@ export class Reader {
     }
   }
 
-  private readBuffer(input: Buffer): Promise<ReaderResult> {
-    if (input[input.length - 1] !== this.newline) {
-      input = Buffer.concat([input, Buffer.alloc(1, '\n')])
-    }
-
-    this.readLines(input)
-
-    return Promise.resolve(this.result).finally(() => this.reset())
-  }
-
   private readReadable(input: Readable): Promise<ReaderResult> {
     const { end } = this.range
 
@@ -143,11 +135,15 @@ export class Reader {
       input
         .on('error', err => reject(err))
         .on('data', async (chunk: Buffer) => {
-          buffer = buffer === null ? chunk : Buffer.concat([buffer, chunk], buffer.length + chunk.length)
-          buffer = this.readLines(buffer)
-          if (end && this.lineNumber >= end) {
-            input.destroy()
-            input.emit('end')
+          try {
+            buffer = buffer === null ? chunk : Buffer.concat([buffer, chunk], buffer.length + chunk.length)
+            buffer = this.readLines(buffer)
+            if (end && this.lineNumber >= end) {
+              input.destroy()
+              input.emit('end')
+            }
+          } catch (e) {
+            reject(e)
           }
         })
         .on('end', () => resolve(this.result))
@@ -274,7 +270,7 @@ export class Reader {
     return input.slice(read, input.length)
   }
 
-  private rowCallback = (row: string[]): void => {
+  private rowCallback(row: string[]): void {
     if (this.actualLine === 1) {
       this.maxColumns = row.length
     } else if (this.strict && row.length !== this.maxColumns) {

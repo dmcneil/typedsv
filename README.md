@@ -516,21 +516,13 @@ const input = `
 `
 ```
 
-#### `Buffer`
-
-```typescript
-const input = Buffer.from(`
-"1","John","Doe"
-"2","Jane","Doe"
-"3","Matt","Smith"
-`)
-```
-
 #### `Readable`
 
-The most common method is reading a file into a `ReadStream`.
+The most common method is reading a file using `createReadStream`:
 
 ```typescript
+import { createReadStream } from 'fs'
+
 const input = createReadStream('/tmp/data.csv')
 ```
 
