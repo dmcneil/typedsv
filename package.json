@@ -47,9 +47,5 @@
     "tslint-config-prettier": "^1.18.0",
     "typescript": "^3.2.1"
   },
-  "exclude": [
-    "node_modules",
-    "**/*.spec.ts",
-    "**/fixtures"
-  ]
+  "files": ["build/**/*"]
 }
